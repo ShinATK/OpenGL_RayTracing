@@ -115,9 +115,6 @@ int main()
             }
             ImGui::End();
         }
-        
-        
-        // Set size
 
         // Update
         scene->Update();
