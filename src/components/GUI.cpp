@@ -1,5 +1,7 @@
 #include "GUI.h"
 
+#include <string>
+
 GUI::GUI(GLFWwindow* window) : io(nullptr), clearColor(0.0f, 0.0f, 0.0f, 1.00f)
 {
 	// …Ë÷√ imgui context
@@ -59,21 +61,19 @@ void GUI::SetBool(const char* usefor, bool& value, bool bSameLineWithFront)
 
 void GUI::SetVec3(const char* usefor, float* vector3f, int* limits)
 {
-	{
-		ImGui::Text(usefor);
-		ImGui::SliderFloat("vec3.x", vector3f,		limits[0], limits[1]);
-		ImGui::SliderFloat("vec3.y", vector3f+1,	limits[0], limits[1]);
-		ImGui::SliderFloat("vec3.z", vector3f+2,	limits[0], limits[1]);
-	} ImGui::Separator();
+	ImGui::Text(usefor);
+	ImGui::SliderFloat((std::string(usefor) + std::string(".x")).c_str(), vector3f, limits[0], limits[1]);
+	ImGui::SliderFloat((std::string(usefor) + std::string(".y")).c_str(), vector3f + 1, limits[0], limits[1]);
+	ImGui::SliderFloat((std::string(usefor) + std::string(".z")).c_str(), vector3f + 2, limits[0], limits[1]);
+	ImGui::Separator();
 }
 
 
 void GUI::SetFloat(const char* usefor, float& value, int* limits)
 {
 	float temp = value;
-	{
-		ImGui::SliderFloat(usefor, &temp, limits[0], limits[1]);
-	} ImGui::Separator();
+	ImGui::SliderFloat(usefor, &temp, limits[0], limits[1]);
+	ImGui::Separator();
 	value = temp;
 }
 
