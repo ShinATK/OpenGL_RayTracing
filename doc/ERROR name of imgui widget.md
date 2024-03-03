@@ -38,7 +38,7 @@ void GUI::SetVec3(const char* usefor, float* vector3f, int* limits)
 
 问题出在哪里呢？**在这里`vec.x, vec.y, vec.z`**
 
-由于封装成了函数，传入了 usefor 本来就是为了设置控件的名称标识的，结果忘了最重要的部分。
+由于封装成了函数，传入的 usefor 本来就是为了设置控件的名称标识的，结果忘了设置在最重要的部分。
 
 修改如下后运行无误
 
