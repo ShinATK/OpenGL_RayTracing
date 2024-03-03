@@ -5,3 +5,6 @@ imgui.ini
 RayTracing.vcxproj
 RayTracing.vcxproj.filters
 RayTracing.vcxproj.user
+doc/default.txt
+doc/test.cpp
+doc/test.exe
