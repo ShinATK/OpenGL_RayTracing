@@ -1,6 +1,6 @@
 #include "Scene.h"
 
-Scene::Scene(GLFWwindow* window, const GLuint width, const GLuint height) :m_width(width), m_height(height), m_window(window), m_camera(nullptr), m_chosenObject(nullptr), Objects()
+Scene::Scene(GLFWwindow* window, const GLuint width, const GLuint height) :m_width(width), m_height(height), m_window(window), m_camera(nullptr), m_chosenObject(nullptr), Objects(), m_showSkybox(false)
 {
 	// Camera
 	m_camera = new Camera();
@@ -61,7 +61,7 @@ void Scene::Init()
 	Objects["Object"]["floor"]  = new Object("floor", glm::vec3(0, -1, 0));
 
 	// 创建 lights
-	Objects["Light"]["light"]   = new Object("light", glm::vec3(1.2f, 1.0f, 2.0f));
+	Objects["Light"]["light"]   = new Object("light", glm::vec3(1.2f, 1.0f, 2.0f), glm::vec3(0.5f));
 	Lights.push_back(new Light(Objects["Light"]["light"]->GetPosition(), glm::vec3(0.2f), glm::vec3(0.5f), glm::vec3(1.0f)));
 }
 
@@ -69,7 +69,7 @@ void Scene::Render(GLfloat dt)
 {
 
 	// Render
-	this->DrawSkybox(ResourceManager::GetShader("skybox"));
+	if(this->m_showSkybox) this->DrawSkybox(ResourceManager::GetShader("skybox"));
 	this->DrawObjects();
 	//this->m_player->Draw();
 
@@ -93,6 +93,9 @@ void Scene::Update()
 
 	// Update position
 	
+	// 更新 light 位置（light 跟随可视化光源位置的 cube 移动）
+	Lights[0]->m_position = Objects["Light"]["light"]->GetPosition();
+
 	// 更新 player 位置
 	m_player->SetPosition(m_camera->position_ + glm::normalize(m_camera->front_));
 	
@@ -344,6 +347,16 @@ void Scene::ClearChosenObject()
 		m_chosenObject->SetClicked(false);
 		m_chosenObject = nullptr;
 	}
+}
+
+GLboolean Scene::GetShowSkybox() const
+{
+	return this->m_showSkybox;
+}
+
+void Scene::SetShowSkybox(GLboolean show)
+{
+	this->m_showSkybox = show;
 }
 
 

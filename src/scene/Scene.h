@@ -34,6 +34,8 @@ private:
 	Object*				m_player;
 	Object*				m_chosenObject; // chosen object
 
+	GLboolean			m_showSkybox;
+
 	//TODO：增加检测，设置物体上限
 	std::unordered_map<std::string, std::unordered_map<std::string, Object*>> Objects;
 
@@ -74,6 +76,9 @@ public:
 	// Get
 	Object* GetChosenObject();
 	void ClearChosenObject();
+
+	GLboolean GetShowSkybox() const;
+	void SetShowSkybox(GLboolean show);
 
 private:
 
