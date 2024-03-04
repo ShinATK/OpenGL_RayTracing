@@ -35,14 +35,15 @@ void GUI::Init(bool bCatch)
 	this->CatchMouse(bCatch);
 }
 
-void GUI::MainWidget(const char* object_name)
+void GUI::MainWidget(const char* object_name, bool END)
 {
 	ImGui::Begin(object_name);
 	{
-		this->ShowFrameRate();
 		this->SetClearColor();
+		static bool bShowGraph = false;
+		if(this->SetCheckBox("Show Framerate Graph", &bShowGraph)) this->ShowFrameRate();
 	}
-	ImGui::End();
+	if(END) ImGui::End();
 }
 
 void GUI::Render()
@@ -51,29 +52,33 @@ void GUI::Render()
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void GUI::SetBool(const char* usefor, bool& value, bool bSameLineWithFront)
+int GUI::SetRadioButton(const char* usefor, int* target, int limit, bool bSameLineWithBack)
 {
-	if (bSameLineWithFront) ImGui::SameLine();
-	bool temp = value;
-	ImGui::Checkbox(usefor, &temp);
-	value = temp;
+	ImGui::RadioButton(usefor, target, limit);
+	if (bSameLineWithBack) ImGui::SameLine();
+	return *target;
+}
+
+bool GUI::SetCheckBox(const char* usefor, bool* value, bool bSameLineWithBack)
+{
+	ImGui::Checkbox(usefor, value);
+	if (bSameLineWithBack) ImGui::SameLine();
+	return *value;
 }
 
 void GUI::SetVec3(const char* usefor, float* vector3f, int* limits)
 {
 	ImGui::Text(usefor);
-	ImGui::SliderFloat((std::string(usefor) + std::string(".x")).c_str(), vector3f, limits[0], limits[1]);
+	ImGui::SliderFloat((std::string(usefor) + std::string(".x")).c_str(), vector3f,		limits[0], limits[1]);
 	ImGui::SliderFloat((std::string(usefor) + std::string(".y")).c_str(), vector3f + 1, limits[0], limits[1]);
 	ImGui::SliderFloat((std::string(usefor) + std::string(".z")).c_str(), vector3f + 2, limits[0], limits[1]);
-	ImGui::Separator();
 }
 
 
-void GUI::SetFloat(const char* usefor, float& value, int* limits)
+void GUI::SetFloat(const char* usefor, float& value, float v_min, float v_max)
 {
 	float temp = value;
-	ImGui::SliderFloat(usefor, &temp, limits[0], limits[1]);
-	ImGui::Separator();
+	ImGui::SliderFloat(usefor, &temp, v_min, v_max);
 	value = temp;
 }
 

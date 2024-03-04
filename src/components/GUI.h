@@ -20,12 +20,14 @@ public:
 
 	void Init(bool bCatch);
 
-	void MainWidget(const char* object_name);
+	void MainWidget(const char* object_name, bool END=true);
 
 	void Render();
 
-	void SetBool(const char* usefor, bool& value, bool bSameLineWithFront);
-	void SetFloat(const char* usefor, float& value, int* limits);
+	int SetRadioButton(const char* usefor, int* target, int limit, bool bSameLineWithBack = false);
+	bool SetCheckBox(const char* usefor, bool* value, bool bSameLineWithBack = false);
+
+	void SetFloat(const char* usefor, float& value, float v_min, float v_max);
 	void SetVec3(const char* usefor, float* vector3f, int* limits);
 	
 private:
