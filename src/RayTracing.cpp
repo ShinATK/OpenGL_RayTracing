@@ -1,8 +1,7 @@
 #include "./components/GLWindow.h"
 #include "./components/GUI.h"
 #include "./scene/Scene.h"
-
-#include "./tools/type_convert.h"
+#include "./scene/tools.h"
 
 const char* OBJECT_NAME = "Ray Tracing";
 
@@ -77,41 +76,77 @@ int main()
 
         // Ready GUI
         gui->Init(bCatchMouse);
-        gui->MainWidget(OBJECT_NAME);
+        gui->MainWidget(OBJECT_NAME, false);
+        {   
+            // Configure Scene Skybox
+            static bool bShowSkybox = scene->GetShowSkybox();
+            gui->SetCheckBox("Show Skybox", &bShowSkybox);
+            scene->SetShowSkybox(bShowSkybox);
+        }
+        ImGui::End();
 
         // Input
         scene->ProcessInput(delta_time);
-
-
-/* Configure chosen object */ 
         
+        // Configure Chosen Object
         if (scene->GetChosenObject()) {
             ImGui::Begin(scene->GetChosenObject()->GetName());
             {
                 // Set position
-                static float pos[3];
-                int pos_limits[2] = {-10, 10};
-                ToFloat3<glm::vec3, float>(scene->GetChosenObject()->GetPosition(), pos);
-                gui->SetVec3("Set Position", pos, pos_limits);
-                scene->GetChosenObject()->SetPosition(ToVec3<float, glm::vec3>(pos));
+                static bool pos_checkBox = false;
+                gui->SetCheckBox("Object position configure", &pos_checkBox); ImGui::SameLine();
+                if (ImGui::Button("Rest Position")) { scene->GetChosenObject()->SetPosition(glm::vec3(0.0f)); }
+                if (pos_checkBox)
+                {
+                    static float    pos[3];
+                    int             pos_limits[2] = {-10, 10};
+                    ToFloat3<glm::vec3, float>(scene->GetChosenObject()->GetPosition(), pos);
+                    gui->SetVec3("Set Position", pos, pos_limits);
+                    scene->GetChosenObject()->SetPosition(ToVec3<float, glm::vec3>(pos));
+                }
 
                 // Set Size
-                static float size[3];
-                int size_limits[2] = {0, 5};
-                ToFloat3<glm::vec3, float>(scene->GetChosenObject()->GetSize(), size);
-                gui->SetVec3("Set Size", size, size_limits);
-                scene->GetChosenObject()->SetSize(ToVec3<float, glm::vec3>(size));
+                static bool size_checkBox = false;
+                gui->SetCheckBox("Object size configure", &size_checkBox); ImGui::SameLine();
+                if (ImGui::Button("Rest Size")) { scene->GetChosenObject()->SetSize(glm::vec3(1.0f)); }
+                if (size_checkBox)
+                {
+                    static float    size[3];
+                    int             size_limits[2] = { 0, 5 };
+                    ToFloat3<glm::vec3, float>(scene->GetChosenObject()->GetSize(), size);
+                    gui->SetVec3("Set Size", size, size_limits);
+                    scene->GetChosenObject()->SetSize(ToVec3<float, glm::vec3>(size));
+                }
 
-                // Set rotation
-                //static float rotation[4];
-                //// int rotate_limits[]
-                //int angle_limits[2] = { -180, 180 };
-                //ToFloat4<glm::vec4, float>(scene->GetChosenObject()->GetRotation(), rotation);
-                //// TODO: 修改为选择依据世界空间的 x y z 哪个轴转
-                //static bool 
-                //gui->Text("Rotation Axis");
-                //gui->SetBool("Axis-x", , false); gui->SetBool("Axis-y", , true); gui->SetBool("Axis-z", , true);
-                //gui->SetFloat("Set Rotate Angle", rotation[3], angle_limits);
+                // Set Rotation
+                static bool rotate_checkBox = false;
+                gui->SetCheckBox("Object rotate configure", &rotate_checkBox); ImGui::SameLine();
+                if (ImGui::Button("Rest Rotation")) {
+                    scene->GetChosenObject()->SetYaw(0);
+                    scene->GetChosenObject()->SetPitch(0);
+                    scene->GetChosenObject()->SetRoll(0);
+                }
+                if (rotate_checkBox)
+                {
+                    static int axis = -1;
+                    static float angle[3];
+                        angle[0] = scene->GetChosenObject()->GetYaw();
+                        angle[1] = scene->GetChosenObject()->GetPitch();
+                        angle[2] = scene->GetChosenObject()->GetRoll();
+                    if (gui->SetRadioButton("Axis X", &axis, 0) == 0) { ImGui::SameLine();  
+                        gui->SetFloat("Set Yaw", angle[0], -180, 180);
+                        scene->GetChosenObject()->SetYaw(angle[0]);
+                    }
+                    if (gui->SetRadioButton("Axis Y", &axis, 1) == 1) {ImGui::SameLine(); 
+                        gui->SetFloat("Set Pitch", angle[1], -180, 180);
+                        scene->GetChosenObject()->SetPitch(angle[1]);
+                    }
+                    if (gui->SetRadioButton("Axis Z", &axis, 2) == 2) {
+                        ImGui::SameLine();
+                        gui->SetFloat("Set Roll", angle[2], -180, 180);
+                        scene->GetChosenObject()->SetRoll(angle[2]);
+                    }
+                }
             }
             ImGui::End();
         }
@@ -187,4 +222,3 @@ void HideCursor(GLFWwindow* window, GLboolean bHide)
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 }
-
