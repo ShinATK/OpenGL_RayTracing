@@ -10,7 +10,11 @@ private:
     // Object state
     const char* m_name;
     glm::vec3   m_position, m_size, m_color;
-    glm::vec4   m_rotation; // (x,y,z) for rotation axis, w for rotate angle
+
+    glm::vec4   m_rotation;
+    float       m_pitch, m_yaw, m_roll;
+
+    glm::mat4   m_model;
 
     GLboolean   m_shown; // draw object or not
     GLboolean   m_clicked; // cursor clicked or not
@@ -36,7 +40,7 @@ private:
 
 public:
     // Constructor(s)
-    Object(const char* name, glm::vec3 pos, glm::vec3 size = glm::vec3(1.0f), glm::vec4 rotation = glm::vec4(0.0f,1.0f,0.0f,0.0f), glm::vec3 color = glm::vec3(1.0f));
+    Object(const char* name, glm::vec3 pos, glm::vec3 size=glm::vec3(1.0f));
     virtual ~Object();
 
     // Draw
@@ -54,23 +58,38 @@ public:
     void Get2DBBox(glm::mat4 projection, glm::mat4 view, float screenWidth, float screenHeight);
 
 
+    // Input
+    void RotateX(float angle);
+    void RotateY(float angle);
+    void RotateZ(float angle);
+
+
     // Set
+
+    void SetClicked(bool bClicked);
+    void SetShowBox(bool bShow);
     void SetShown(bool bCanSee);
+
     void SetShader(const std::string Shader);
     void SetTexture(const std::string Texture);
     void SetMaterial(const std::string Material);
 
     void SetPosition(glm::vec3 new_position);
-    void SetRotation(glm::vec4 new_rotation);
     void SetSize(glm::vec3 new_size);
+    void SetRotation(float angle, int axis);
 
-    void SetClicked(bool bClicked);
-    void SetShowBox(bool bShow);
+    void SetYaw(float angle);
+    void SetPitch(float angle);
+    void SetRoll(float angle);
 
     // Get
     glm::vec3 GetPosition() const;
-    glm::vec4 GetRotation() const;
     glm::vec3 GetSize() const;
+    glm::vec4 GetRotation() const;
+
+    float GetPitch() const;
+    float GetYaw() const;
+    float GetRoll() const;
 
     const char* GetName() const;
     bool GetClicked() const;
@@ -82,6 +101,10 @@ private:
     void UpdateShader(bool bUseTexture);
     void UpdateMaterial(); // 传入自定义材质数据，并调用对应的Shader
     void UpdateTexture();
+
+    glm::vec4 ToQuat(glm::vec4 vec4);
+    glm::vec4 ToVec4(glm::vec4 quat);
+    glm::vec4 QuaternionMultiplication(glm::vec4 q1, glm::vec4 q2);
 };
 
 

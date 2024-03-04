@@ -2,12 +2,13 @@
 
 // Constructor(s)
 
-Object::Object(const char* name, glm::vec3 pos, glm::vec3 size, glm::vec4 rotation, glm::vec3 color) :
+Object::Object(const char* name, glm::vec3 pos, glm::vec3 size) :
     m_name(name),
     m_position(pos), // 默认位置为原点
     m_size(size), // 默认尺寸为单位大小
-    m_color(color), // 默认颜色为白色
-    m_rotation(rotation), // 默认旋转为不旋转
+    m_rotation(1,0,0,0), m_yaw(0.0f),m_pitch(0.0f),m_roll(0.0f),
+    m_model(1.0f),
+    m_color(1.0f), // 默认颜色为白色
     m_shown(true), // 默认显示对象
     m_clicked(false), // 默认未选中
     m_bShowBox(false),
@@ -35,6 +36,13 @@ Object::~Object()
 // Draw
 
 void Object::Draw() {
+    
+    m_model = glm::mat4(1.0f);                                                        // 初始化
+    m_model = glm::translate(m_model, m_position);                                    // Translate
+    m_model = glm::rotate(m_model, glm::radians(m_yaw), glm::vec3(1, 0, 0));// Rotation
+    m_model = glm::rotate(m_model, glm::radians(m_pitch), glm::vec3(0, 1, 0));// Rotation
+    m_model = glm::rotate(m_model, glm::radians(m_roll), glm::vec3(0, 0, 1));// Rotation
+    m_model = glm::scale(m_model, m_size);                                            // Scale
 
     UpdateResources(true);
 
@@ -48,7 +56,6 @@ void Object::Draw() {
         this->ShowBBox();
     }
 }
-
 
 // Update Resources
 
@@ -79,28 +86,46 @@ bool Object::CheckClick(double mouseX, double mouseY) const
 
 // Set
 
-void Object::SetShown(bool bCanSee)                  { this->m_shown = bCanSee; }
+void Object::SetClicked(bool bClicked)                  { this->m_clicked  = bClicked; }
+void Object::SetShowBox(bool bShow)                     { this->m_bShowBox = bShow; }
+void Object::SetShown(bool bCanSee)                     { this->m_shown    = bCanSee; }
 
-void Object::SetShader(const std::string Shader)     { this->m_shader = Shader; }
-void Object::SetTexture(const std::string Texture)   { this->m_texture = Texture; }
-void Object::SetMaterial(const std::string Material) { this->m_material = Material; }
+void Object::SetShader(const std::string Shader)        { this->m_shader   = Shader; }
+void Object::SetTexture(const std::string Texture)      { this->m_texture  = Texture; }
+void Object::SetMaterial(const std::string Material)    { this->m_material = Material; }
 
-void Object::SetPosition(glm::vec3 new_position)     { this->m_position = new_position; }
-void Object::SetRotation(glm::vec4 new_rotation)     { this->m_rotation = new_rotation; }
-void Object::SetSize(glm::vec3 new_size)             { this->m_size = new_size; }
+void Object::SetPosition(glm::vec3 new_position)        { this->m_position = new_position; }
+void Object::SetSize(glm::vec3 new_size)                { this->m_size     = new_size; }
 
-void Object::SetClicked(bool bClicked)               { this->m_clicked = bClicked; }
-void Object::SetShowBox(bool bShow)                  { this->m_bShowBox = bShow; }
+void Object::SetYaw(float angle)                        
+{ 
+    this->m_yaw = angle;
+    m_rotation = glm::vec4(1, 0, 0, angle);
+}
+void Object::SetPitch(float angle)                      
+{ 
+    this->m_pitch = angle; 
+    m_rotation = glm::vec4(0, 1, 0, angle);
+}
+void Object::SetRoll(float angle)                       
+{ 
+    this->m_roll = angle; 
+    m_rotation = glm::vec4(0, 0, 1, angle);
+}
 
 
 // Get
-glm::vec3 Object::GetPosition() const { return this->m_position; }
-glm::vec4 Object::GetRotation() const { return this->m_rotation; }
-glm::vec3 Object::GetSize() const { return this->m_size; }
-
 const char* Object::GetName() const { return this->m_name; }
 bool Object::GetClicked() const { return this->m_clicked; }
 float Object::GetDepth() const { return this->m_depth; }
+
+glm::vec3 Object::GetPosition() const { return this->m_position; }
+glm::vec3 Object::GetSize() const { return this->m_size; }
+glm::vec4 Object::GetRotation() const { return this->m_rotation; }
+
+float Object::GetPitch() const { return this->m_pitch; }
+float Object::GetYaw() const { return this->m_yaw; }
+float Object::GetRoll() const { return this->m_roll; }
 
 
 // Update material, shader, texture
@@ -137,18 +162,8 @@ void Object::UpdateMaterial() {
     }
 }
 void Object::UpdateShader(bool bUseTexture) {
-    glm::mat4 model = glm::mat4(1.0f); // 一定记着初始化
-    // Translate
-    model = glm::translate(model, m_position);
-    // Rotation
-    model = glm::translate(model, glm::vec3(0.5f * m_size.x, 0.5f * m_size.y, 0.0f));
-    model = glm::rotate(model, m_rotation.w, glm::vec3(m_rotation));
-    model = glm::translate(model, glm::vec3(-0.5f * m_size.x, -0.5f * m_size.y, 0.0f));
-    // Scale
-    model = glm::scale(model, m_size);
-    ResourceManager::GetShader(m_shader).SetMatrix4("model", model);
+    ResourceManager::GetShader(m_shader).SetMatrix4("model", m_model);
     ResourceManager::GetShader(m_shader).SetBoolean("bUseTexture", bUseTexture);
-
     ResourceManager::GetShader(m_shader).Use();
 }
 void Object::UpdateTexture() {
@@ -157,21 +172,12 @@ void Object::UpdateTexture() {
 }
 
 
+
+
 // Bounding Box
 
 void Object::Get2DBBox(glm::mat4 projection, glm::mat4 view, float screenWidth, float screenHeight)
 {
-    glm::mat4 model = glm::mat4(1.0f); // 一定记着初始化
-
-    // Translate
-    model = glm::translate(model, m_position);
-    // Rotation
-    model = glm::translate(model, glm::vec3(0.5f * m_size.x, 0.5f * m_size.y, 0.0f));
-    model = glm::rotate(model, m_rotation.w, glm::vec3(m_rotation));
-    model = glm::translate(model, glm::vec3(-0.5f * m_size.x, -0.5f * m_size.y, 0.0f));
-    // Scale
-    model = glm::scale(model, m_size);
-
     // 计算立方体的包围框
     glm::vec3 screenMin = glm::vec3(std::numeric_limits<float>::max());
     glm::vec3 screenMax = glm::vec3(std::numeric_limits<float>::lowest());
@@ -195,7 +201,7 @@ void Object::Get2DBBox(glm::mat4 projection, glm::mat4 view, float screenWidth, 
 
     // 计算顶点在屏幕空间的位置
     for (int i = 0; i < 8; i++) {
-        glm::vec4 clipSpacePos = projection * view * model * glm::vec4(vertices[i], 1.0f);
+        glm::vec4 clipSpacePos = projection * view * m_model * glm::vec4(vertices[i], 1.0f);
         m_boxMin = glm::min(m_boxMin, glm::vec2(clipSpacePos.x / clipSpacePos.w, clipSpacePos.y/clipSpacePos.w));
         m_boxMax = glm::max(m_boxMax, glm::vec2(clipSpacePos.x / clipSpacePos.w, clipSpacePos.y / clipSpacePos.w));
         glm::vec3 screenSpacePos = glm::vec3((clipSpacePos.x / clipSpacePos.w + 1.0f) * 0.5f * screenWidth,
@@ -213,7 +219,6 @@ void Object::Get2DBBox(glm::mat4 projection, glm::mat4 view, float screenWidth, 
 
     m_depth = (depthMin + depthMax) * 0.5;
 }
-
 void Object::ShowBBox() {
 
     GLfloat vertices[] = {
@@ -252,7 +257,6 @@ void Object::ShowBBox() {
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
 }
-
 void Object::BindVAO() {
     GLuint cubeVBO = 0;
     GLfloat vertices[] = {
@@ -320,5 +324,23 @@ void Object::BindVAO() {
 }
 
 
+// Tools function
+// vec4: (a, theta)
+// quat: (a sin(theta/2), cos(theta/2))
+glm::vec4 Object::ToQuat(glm::vec4 vec4)
+{
+    glm::vec3 a = glm::vec3(vec4);
+    float theta = vec4[3];
+    return { a * glm::sin(theta / 2), glm::cos(theta / 2) };
+
+}
+
+glm::vec4 Object::QuaternionMultiplication(glm::vec4 q1, glm::vec4 q2) {
+    float w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
+    float x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
+    float y = q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x;
+    float z = q1.w * q2.z + q1.x * q2.y - q1.y * q2.x + q1.z * q2.w;
+    return glm::vec4(x, y, z, w);
+}
 
 
