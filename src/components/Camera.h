@@ -34,7 +34,7 @@ const GLfloat kFar = 100.0f;
 
 class Camera
 {
-public:
+private:
 	glm::vec3 position_;
 	glm::vec3 front_;
 	glm::vec3 up_;
@@ -51,15 +51,36 @@ public:
 	GLfloat near_;
 	GLfloat far_;
 
+	GLboolean m_bLockOnFloor;
+
+public:
 	Camera(glm::vec3 position = kPosition, glm::vec3 up = kUp, float yaw = kYaw, float pitch = kPicth);
 
-	glm::mat4 GetViewMatrix() const;
-	void GetRotation();
 
 	void ProcessInput(GLFWwindow* window, float dt);
 	void PosMovement(Camera_Movement direction, float dt);
 	void ViewMovement(GLfloat xoffset, GLfloat yoffset);
 	void UpdateCameraVectors();
+
+	glm::vec3 GetFront() const;
+	void SetFront(glm::vec3 new_front);
+
+	glm::mat4 GetViewMatrix() const;
+	void GetRotation();
+
+	glm::vec3 GetPosition() const;
+	void SetPosition(glm::vec3 new_position);
+	void SetPositionY(float new_positionY);
+
+	GLfloat GetZoom() const;
+	void SetZoom(GLfloat new_zoom);
+	GLfloat GetNear() const;
+	void SetNear(GLfloat new_near);
+	GLfloat GetFar() const;
+	void SetFar(GLfloat new_far);
+
+	GLboolean GetbLockOnFloor() const;
+	void SetbLockOnFloor(GLboolean bLockOn);
 };
 
 

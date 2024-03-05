@@ -1,6 +1,6 @@
 #include "Camera.h"
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : position_(position), world_up_(up), yaw_(yaw), pitch_(pitch), front_(kFront), movement_speed_(kMovementSpeed), mouse_sensitivity_(kSensitivity), zoom_(kZoom), near_(kNear), far_(kFar)
+Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : position_(position), world_up_(up), yaw_(yaw), pitch_(pitch), front_(kFront), movement_speed_(kMovementSpeed), mouse_sensitivity_(kSensitivity), zoom_(kZoom), near_(kNear), far_(kFar), m_bLockOnFloor(true)
 {
 	this->UpdateCameraVectors();
 }
@@ -20,6 +20,45 @@ void Camera::GetRotation()
 	}
 	std::cout << std::endl;
 }
+glm::vec3 Camera::GetPosition() const
+{
+	return this->position_;
+}
+void Camera::SetPosition(glm::vec3 new_position)
+{
+	this->position_ = new_position;
+}
+void Camera::SetPositionY(float new_positionY)
+{
+	this->position_.y = new_positionY;
+}
+GLfloat Camera::GetZoom() const
+{
+	return this->zoom_;
+}
+void Camera::SetZoom(GLfloat new_zoom)
+{
+	this->zoom_ = new_zoom;
+}
+GLfloat Camera::GetNear() const
+{
+	return this->near_;
+}
+void Camera::SetNear(GLfloat new_near)
+{
+	this->near_ = new_near;
+}
+
+GLfloat Camera::GetFar() const
+{
+	return this->far_;
+}
+
+void Camera::SetFar(GLfloat new_far)
+{
+	this->far_ = new_far;
+}
+
 void Camera::ProcessInput(GLFWwindow* window, float dt)
 {
 	// WASD
@@ -40,22 +79,25 @@ void Camera::ProcessInput(GLFWwindow* window, float dt)
 }
 void Camera::PosMovement(Camera_Movement direction, float deltaTime)
 {
+	glm::vec3 front = (this->m_bLockOnFloor) ? this->front_ : glm::vec3(this->front_.x, 0, this->front_.z);
+	glm::vec3 right = (this->m_bLockOnFloor) ? this->right_ : glm::vec3(this->right_.x, 0, this->right_.z);
+		
 	float velocity = this->movement_speed_ * deltaTime;
 	if (direction == FORWARD)
-		this->position_ += this->front_ * velocity;
+		this->position_ += front * velocity;
 	if (direction == BACKWARD)
-		this->position_ -= this->front_ * velocity;
+		this->position_ -= front * velocity;
 	if (direction == LEFT)
-		this->position_ -= this->right_ * velocity;
+		this->position_ -= right * velocity;
 	if (direction == RIGHT)
-		this->position_ += this->right_ * velocity;
-	if (direction == UP)
-		this->position_ += glm::vec3(0.0f, 1.0f, 0.0f) * velocity;
-	if (direction == DOWN)
-		this->position_ -= glm::vec3(0.0f, 1.0f, 0.0f) * velocity;
-	// Limit to xz plane
-	// position_.y = 0;
-
+		this->position_ += right * velocity;
+	if (!this->m_bLockOnFloor)
+	{
+		if (direction == UP)
+			this->position_ += glm::vec3(0.0f, 1.0f, 0.0f) * velocity;
+		if (direction == DOWN)
+			this->position_ -= glm::vec3(0.0f, 1.0f, 0.0f) * velocity;
+	}
 }
 
 void Camera::ViewMovement(GLfloat xoffset, GLfloat yoffset)
@@ -72,6 +114,26 @@ void Camera::ViewMovement(GLfloat xoffset, GLfloat yoffset)
 		this->pitch_ = -89.0f;
 
 	this->UpdateCameraVectors();
+}
+
+glm::vec3 Camera::GetFront() const
+{
+	return this->front_;
+}
+
+void Camera::SetFront(glm::vec3 new_front)
+{
+	this->front_ = new_front;
+}
+
+GLboolean Camera::GetbLockOnFloor() const
+{
+	return this->m_bLockOnFloor;
+}
+
+void Camera::SetbLockOnFloor(GLboolean bLockOn)
+{
+	this->m_bLockOnFloor = bLockOn;
 }
 
 void Camera::UpdateCameraVectors()
