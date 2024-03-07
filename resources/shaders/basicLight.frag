@@ -17,6 +17,9 @@ struct Material{
 };
 uniform Material material;
 
+uniform sampler2D diffuseTex;
+uniform sampler2D specularTex;
+
 // 定义光源的不同分量的影响
 struct Light{
 	vec3 position;
@@ -29,9 +32,6 @@ uniform Light light;
 uniform vec3 viewPos; // 观察者位置
 
 uniform bool bUseTexture;
-
-uniform sampler2D diffuseTex;
-uniform sampler2D specularTex;
 
 uniform int lightMethod;
 
@@ -58,17 +58,13 @@ void main()
 	float spec = pow(max(useLightMethod, 0.0), material.shininess);
 	
 	// 环境光+漫反射+高光
-	vec3 ambient  = light.ambient * material.ambient;
-	vec3 diffuse  = light.diffuse * material.diffuse * diff;
-	vec3 specular = light.specular * material.specular * spec;
+	vec3 ambient  = light.ambient;
+	vec3 diffuse  = light.diffuse * diff;
+	vec3 specular = light.specular * spec;
 
-	if(bUseTexture)
-	{
-		ambient  *= diffuseColor;
-		diffuse  *= diffuseColor;
-		specular *= specularColor;
-	}
-
+	ambient  *= (bUseTexture)? diffuseColor : material.ambient;
+	diffuse  *= (bUseTexture)? diffuseColor : material.diffuse;
+	//specular *= (bUseTexture)? specularColor : material.specular;
 
 	// 计算最终颜色
 	vec3 finalColor = ambient + diffuse + specular;
