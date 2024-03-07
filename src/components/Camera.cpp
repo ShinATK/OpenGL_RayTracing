@@ -84,13 +84,13 @@ void Camera::PosMovement(Camera_Movement direction, float deltaTime)
 		
 	float velocity = this->movement_speed_ * deltaTime;
 	if (direction == FORWARD)
-		this->position_ += front * velocity;
+		this->position_ += glm::vec3(front.x, 0, front.z) * velocity;
 	if (direction == BACKWARD)
-		this->position_ -= front * velocity;
+		this->position_ -= glm::vec3(front.x, 0, front.z) * velocity;
 	if (direction == LEFT)
-		this->position_ -= right * velocity;
+		this->position_ -= glm::vec3(right.x, 0, right.z) * velocity;
 	if (direction == RIGHT)
-		this->position_ += right * velocity;
+		this->position_ += glm::vec3(right.x, 0, right.z) * velocity;
 	if (!this->m_bLockOnFloor)
 	{
 		if (direction == UP)
