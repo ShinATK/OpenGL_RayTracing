@@ -11,7 +11,6 @@ private:
     const char* m_name;
     glm::vec3   m_position, m_size, m_color;
 
-    glm::vec4   m_rotation;
     float       m_pitch, m_yaw, m_roll;
 
     glm::mat4   m_model;
@@ -44,24 +43,36 @@ private:
     glm::vec2   m_boxMin;
     glm::vec2   m_boxMax;
 
+    // Axis
+
 public:
     // Constructor(s)
-    Object(const char* name, glm::vec3 pos = glm::vec3(0.0f), glm::vec3 size = glm::vec3(1.0f), GLboolean bUseTexture = false);
+    Object(const char* name, glm::vec3 pos = glm::vec3(0.0f), glm::vec3 size = glm::vec3(1.0f), GLboolean bUseTexture = GL_TRUE);
     virtual ~Object();
 
     // Draw
     virtual void BindVAO();
     virtual void Draw();
 
-    // Update Resources
-    void UpdateResources(bool bUseTexture);
+    // Bounding Box
+    void Show2DBBox();
+    void Get2DBBox(glm::mat4 projection, glm::mat4 view, float screenWidth, float screenHeight);
+
+    // Local axis
+    void CalclulateLocalAxis();
+    void ShowAxis(glm::vec3 x, glm::vec3 y, glm::vec3 z);
 
     // Check click
     bool CheckClick(double mouseX, double mouseY) const;
 
-    // Bounding Box
-    void Show2DBBox();
-    void Get2DBBox(glm::mat4 projection, glm::mat4 view, float screenWidth, float screenHeight);
+
+
+    // Set & Get
+    bool GetShow2DBBox() const { return this->m_bShowBox; }
+    void SetShow2DBox(bool bShow) { this->m_bShowBox = bShow; }
+
+    bool GetShonw() const { return this->m_shown; }
+    void SetShown(bool bCanSee) { this->m_shown = bCanSee; }
 
     int GetLightMethod() const { return this->lightMethod; }
     void SetLightMethod(int light_model) { this->lightMethod = light_model; }
@@ -81,44 +92,28 @@ public:
     void SetShininess(float new_shininess) { m_shininess = new_shininess; }
     float GetShininess() const { return m_shininess; }
 
+    void SetClicked(bool bClicked) { this->m_clicked = bClicked; }
+    bool GetClicked() const { return this->m_clicked; }
 
+    float GetDepth() const { return this->m_depth; }
+    const char* GetName() const { return this->m_name; }
 
+    void SetShader(const std::string Shader) { this->m_shader = Shader; }
+    void SetTexture(const std::string Texture) { this->m_texture = Texture; }
 
-    // Set
+    glm::vec3 GetPosition() const { return this->m_position; }
+    glm::vec3 GetSize() const { return this->m_size; }
+    glm::vec3 GetColor() const { return this->m_color; }
+    void SetPosition(glm::vec3 new_position) { this->m_position = new_position; }
+    void SetSize(glm::vec3 new_size) { this->m_size = new_size; }
+    void SetColor(glm::vec3 new_color) { this->m_color = new_color; }
 
-    void SetClicked(bool bClicked);
-    void SetShowBox(bool bShow);
-    void SetShown(bool bCanSee);
-
-    void SetShader(const std::string Shader);
-    void SetTexture(const std::string Texture);
-
-    void SetPosition(glm::vec3 new_position);
-    void SetSize(glm::vec3 new_size);
-
-    void SetYaw(float angle);
-    void SetPitch(float angle);
-    void SetRoll(float angle);
-
-    // Get
-    glm::vec3 GetPosition() const;
-    glm::vec3 GetSize() const;
-    glm::vec4 GetRotation() const;
-
-    float GetPitch() const;
-    float GetYaw() const;
-    float GetRoll() const;
-
-    const char* GetName() const;
-    bool GetClicked() const;
-
-    float GetDepth() const;
-
-private:
-    // Update 
-    void UpdateShader(bool bUseTexture);
-    void UpdateMaterial(); // 传入自定义材质数据，并调用对应的Shader
-    void UpdateTexture();
+    float GetYaw() const { return this->m_yaw; }
+    float GetPitch() const { return this->m_pitch; }
+    float GetRoll() const { return this->m_roll; }
+    void SetYaw(float angle) { this->m_yaw = angle; }
+    void SetPitch(float angle) { this->m_pitch = angle; }
+    void SetRoll(float angle) { this->m_roll = angle; }
 };
 
 
