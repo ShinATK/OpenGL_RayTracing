@@ -6,16 +6,16 @@ Object::Object(const char* name, glm::vec3 pos, glm::vec3 size, GLboolean bUseTe
     m_name(name),
     m_position(pos), // 默认位置为原点
     m_size(size), // 默认尺寸为单位大小
-    m_rotation(1, 0, 0, 0), m_yaw(0.0f), m_pitch(0.0f), m_roll(0.0f),
+    m_yaw(0.0f), m_pitch(0.0f), m_roll(0.0f),
     m_model(1.0f),
     m_color(1.0f), // 默认颜色为白色
     m_shown(true), // 默认显示对象
     m_clicked(false), // 默认未选中
-    m_bShowBox(false),
+    m_bShowBox(true),
     m_VAO(0), // 默认VAO为0
     m_count(0), // 默认顶点数量为0
     lightMethod(0),
-    m_ambient(1.0f, 0.5f, 0.31f), m_diffuse(0.5f), m_specular(0.5f), m_shininess(32.0f),
+    m_ambient(1.0f, 0.5f, 0.31f), m_diffuse(1.0f, 0.5f, 0.31f), m_specular(0.5f), m_shininess(32.0f),
     m_shader("default"), // 默认着色器名称为空
     m_bUseTexture(bUseTexture),
     m_texture("default"), // 默认纹理名称为空
@@ -46,7 +46,25 @@ void Object::Draw() {
     m_model = glm::rotate(m_model, glm::radians(m_roll), glm::vec3(0, 0, 1));// Rotation
     m_model = glm::scale(m_model, m_size);                                            // Scale
 
-    UpdateResources(m_bUseTexture);
+    if (m_name != "light")
+    {
+        ResourceManager::GetShader(m_shader).SetVector3f("material.ambient", m_ambient);
+        ResourceManager::GetShader(m_shader).SetVector3f("material.diffuse", m_diffuse);
+        ResourceManager::GetShader(m_shader).SetVector3f("material.specular", m_specular);
+    }
+
+    if (m_bUseTexture) {
+        glActiveTexture(GL_TEXTURE0);
+        ResourceManager::GetTexture(m_texture).Bind();
+    }
+
+    ResourceManager::GetShader(m_shader).SetVector3f("scaleFactor", m_size);
+    ResourceManager::GetShader(m_shader).SetFloat("material.shininess", m_shininess);
+    ResourceManager::GetShader(m_shader).SetVector3f("color", m_color);
+    ResourceManager::GetShader(m_shader).SetInteger("lightMethod", lightMethod);
+    ResourceManager::GetShader(m_shader).SetMatrix4("model", m_model);
+    ResourceManager::GetShader(m_shader).SetBoolean("bUseTexture", m_bUseTexture);
+    ResourceManager::GetShader(m_shader).Use();
 
     if (this->m_shown) {
         glBindVertexArray(m_VAO);
@@ -54,18 +72,9 @@ void Object::Draw() {
         glBindVertexArray(0);
     }
 
-    if (this->m_clicked) { // bShowBBox
+    if (this->m_clicked && this->m_bShowBox) { // bShowBBox
         this->Show2DBBox();
     }
-}
-
-// Update Resources
-
-void Object::UpdateResources(bool bUseTexture)
-{
-    this->UpdateMaterial();
-    this->UpdateShader(bUseTexture);
-    this->UpdateTexture();
 }
 
 
@@ -73,78 +82,10 @@ void Object::UpdateResources(bool bUseTexture)
 
 bool Object::CheckClick(double mouseX, double mouseY) const
 {
-    //std::cout << "BoxMin = " << m_bBoxMin.x << ", " << m_bBoxMin.y << std::endl;
-    //std::cout << "BoxMax = " << m_bBoxMax.x << ", " << m_bBoxMax.y << std::endl;
-
-    //std::cout << "boxMin = " << m_boxMin.x << ", " << m_boxMin.y << std::endl;
-    //std::cout << "boxMax = " << m_boxMax.x << ", " << m_boxMax.y << std::endl;
-
     bool xInRange = (mouseX >= m_bBoxMin.x && mouseX <= m_bBoxMax.x);
     bool yInRange = (mouseY >= m_bBoxMin.y && mouseY <= m_bBoxMax.y);
 
     return xInRange && yInRange;
-}
-
-
-// Set
-
-void Object::SetClicked(bool bClicked)                  { this->m_clicked  = bClicked; }
-void Object::SetShowBox(bool bShow)                     { this->m_bShowBox = bShow; }
-void Object::SetShown(bool bCanSee)                     { this->m_shown    = bCanSee; }
-
-void Object::SetShader(const std::string Shader)        { this->m_shader   = Shader; }
-void Object::SetTexture(const std::string Texture)      { this->m_texture  = Texture; }
-
-void Object::SetPosition(glm::vec3 new_position)        { this->m_position = new_position; }
-void Object::SetSize(glm::vec3 new_size)                { this->m_size     = new_size; }
-
-void Object::SetYaw(float angle)                        
-{ 
-    this->m_yaw = angle;
-    m_rotation = glm::vec4(1, 0, 0, angle);
-}
-void Object::SetPitch(float angle)                      
-{ 
-    this->m_pitch = angle; 
-    m_rotation = glm::vec4(0, 1, 0, angle);
-}
-void Object::SetRoll(float angle)                       
-{ 
-    this->m_roll = angle; 
-    m_rotation = glm::vec4(0, 0, 1, angle);
-}
-
-
-// Get
-const char* Object::GetName() const { return this->m_name; }
-bool Object::GetClicked() const { return this->m_clicked; }
-float Object::GetDepth() const { return this->m_depth; }
-
-glm::vec3 Object::GetPosition() const { return this->m_position; }
-glm::vec3 Object::GetSize() const { return this->m_size; }
-glm::vec4 Object::GetRotation() const { return this->m_rotation; }
-
-float Object::GetPitch() const { return this->m_pitch; }
-float Object::GetYaw() const { return this->m_yaw; }
-float Object::GetRoll() const { return this->m_roll; }
-
-
-void Object::UpdateShader(bool bUseTexture) {
-    ResourceManager::GetShader(m_shader).SetInteger("lightMethod", lightMethod);
-    ResourceManager::GetShader(m_shader).SetMatrix4("model", m_model);
-    ResourceManager::GetShader(m_shader).SetBoolean("bUseTexture", bUseTexture);
-    ResourceManager::GetShader(m_shader).Use();
-}
-void Object::UpdateMaterial()
-{
-    ResourceManager::GetShader(m_shader).SetVector3f("material.ambient", m_ambient);
-    ResourceManager::GetShader(m_shader).SetVector3f("material.diffuse", m_diffuse);
-    ResourceManager::GetShader(m_shader).SetVector3f("material.specular", m_specular);
-    ResourceManager::GetShader(m_shader).SetFloat("material.shininess", m_shininess);
-}
-void Object::UpdateTexture() {
-    glActiveTexture(GL_TEXTURE0);
-    ResourceManager::GetTexture(m_texture).Bind();
 }
 
 
