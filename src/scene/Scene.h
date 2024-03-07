@@ -31,7 +31,6 @@ private:
 	Camera*				m_camera;
 	glm::mat4			m_projection;
 
-	Object*				m_player;
 	Object*				m_chosenObject; // chosen object
 
 	GLboolean			m_showSkybox;
@@ -41,8 +40,6 @@ private:
 
 	// TODO: 将light作为object的派生类实现
 	std::vector<Light*> Lights;
-
-
 
 public:
 	Scene(GLFWwindow* window, const GLuint width, const GLuint height);
@@ -60,7 +57,7 @@ public:
 	void ClearObjects();
 
 	// Configure
-	void ApplyTo(std::string Category, std::string ObjectName, std::string Shader = "default", std::string Texture = "default", std::string Material = "default");
+	void ApplyTo(std::string Category, std::string ObjectName, std::string Shader = "default", std::string Texture = "default");
 
 	// Draw
 	void DrawObjects();
@@ -73,12 +70,17 @@ public:
 	// Callback
 	void SetCameraView(GLfloat xpos, GLfloat ypos, GLfloat& lastX, GLfloat& lastY, GLboolean bCatchMouse, GLboolean& bFirstMouse);
 
-	// Get
-	Object* GetChosenObject();
 	void ClearChosenObject();
+
+	// Get
+
+
+	Object* GetChosenObject();
 
 	GLboolean GetShowSkybox() const;
 	void SetShowSkybox(GLboolean show);
+
+	Camera* GetCamera() const { return this->m_camera; }
 
 private:
 
