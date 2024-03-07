@@ -1,4 +1,4 @@
-# OpenGL RayTracing
+# OpenGL Renderer Box
 
 基于 OpenGL 的简陋 Demo
 
