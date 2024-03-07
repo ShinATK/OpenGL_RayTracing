@@ -16,7 +16,7 @@ struct Light {
 	glm::vec3 m_ambient;
 	glm::vec3 m_diffuse;
 	glm::vec3 m_specular;
-	Light(glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular) :
+	Light(glm::vec3 position, glm::vec3 ambient = glm::vec3(0.05f), glm::vec3 diffuse = glm::vec3(1.0f), glm::vec3 specular = glm::vec3(0.3f)) :
 		m_position(position), m_ambient(ambient), m_diffuse(diffuse), m_specular(specular)
 	{}
 };
