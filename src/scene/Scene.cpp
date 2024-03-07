@@ -51,12 +51,14 @@ void Scene::Init()
 	ResourceManager::LoadTexture("./resources/textures/wood.png", GL_TRUE, "wood");
 
 	// 创建 objects
-	Objects["Object"]["container"]   = new Object("container", glm::vec3(0, 0, -3));
-	Objects["Object"]["floor"]  = new Object("floor", glm::vec3(0, -1, 0), glm::vec3(10.0f, 1.0f, 10.0f));
+	Objects["Object"]["container"] = new Object("container", glm::vec3(0, 0, -3), glm::vec3(1.0f));
+	Objects["Object"]["container"]->SetShown(false);
+	Objects["Object"]["floor"] = new Object("floor", glm::vec3(0, -1, 0), glm::vec3(10.0f, 1.0f, 10.0f));
 
 	// 创建 lights
-	Objects["Light"]["light"]   = new Object("light", glm::vec3(1.2f, 1.0f, 2.0f), glm::vec3(0.5f));
-	Lights.push_back(new Light(Objects["Light"]["light"]->GetPosition(), glm::vec3(0.2f), glm::vec3(0.5f), glm::vec3(1.0f)));
+	Objects["Light"]["light"] = new Object("light", glm::vec3(1.2f, 1.0f, 2.0f), glm::vec3(0.5f), GL_FALSE);
+	Objects["Light"]["light"]->SetShader("default");
+	Lights.push_back(new Light(Objects["Light"]["light"]->GetPosition()));
 }
 
 void Scene::Render(GLfloat dt)
@@ -92,10 +94,10 @@ void Scene::Update()
 		m_chosenObject->Get2DBBox(m_projection, view, m_width, m_height);
 
 	// Update light uniform
-	ResourceManager::GetShader("basicLight").SetVector3f("light.position",	Lights[0]->m_position);
-	ResourceManager::GetShader("basicLight").SetVector3f("light.ambient",	Lights[0]->m_ambient);
-	ResourceManager::GetShader("basicLight").SetVector3f("light.diffuse",	Lights[0]->m_diffuse);
-	ResourceManager::GetShader("basicLight").SetVector3f("light.specular",	Lights[0]->m_specular);
+	ResourceManager::GetShader("basicLight").SetVector3f("light.position", Lights[0]->m_position);
+	ResourceManager::GetShader("basicLight").SetVector3f("light.ambient", Objects["Light"]["light"]->GetColor() * Lights[0]->m_ambient);
+	ResourceManager::GetShader("basicLight").SetVector3f("light.diffuse", Objects["Light"]["light"]->GetColor() * Lights[0]->m_diffuse);
+	ResourceManager::GetShader("basicLight").SetVector3f("light.specular", Objects["Light"]["light"]->GetColor() * Lights[0]->m_specular);
 	
 	// TODO: 设置 Enum 来规范 Category，Shader， Material 的名称
 	// TODO: 自动遍历并应用
@@ -292,6 +294,11 @@ void Scene::SetCameraView(GLfloat xpos, GLfloat ypos, GLfloat& lastX, GLfloat& l
 		yoffset *= sensitivity;
 
 		m_camera->ViewMovement(xoffset, yoffset);
+	}
+	else
+	{
+		lastX = xpos;
+		lastY = ypos;
 	}
 }
 
