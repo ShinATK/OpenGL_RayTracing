@@ -82,6 +82,12 @@ int main()
             static bool bShowSkybox = scene->GetShowSkybox();
             gui->SetCheckBox("Show Skybox", &bShowSkybox);
             scene->SetShowSkybox(bShowSkybox);
+            
+            // Configure Camera movement
+            static bool bLockOnFloor = scene->GetCamera()->GetbLockOnFloor();
+            gui->SetCheckBox("Camera Lock On Floor", &bLockOnFloor);
+            scene->GetCamera()->SetbLockOnFloor(bLockOnFloor);
+
         }
         ImGui::End();
 
@@ -92,6 +98,13 @@ int main()
         if (scene->GetChosenObject()) {
             ImGui::Begin(scene->GetChosenObject()->GetName());
             {
+                // Set Light Method
+                static int light_method = scene->GetChosenObject()->GetLightMethod(); // phong by default
+                ImGui::Text("Light Method");
+                gui->SetRadioButton("Phong", &light_method, 0); ImGui::SameLine();
+                gui->SetRadioButton("Blinn-Phong", &light_method, 1);
+                scene->GetChosenObject()->SetLightMethod(light_method);
+
                 // Set position
                 static bool pos_checkBox = false;
                 gui->SetCheckBox("Object position configure", &pos_checkBox); ImGui::SameLine();
@@ -146,6 +159,32 @@ int main()
                         gui->SetFloat("Set Roll", angle[2], -180, 180);
                         scene->GetChosenObject()->SetRoll(angle[2]);
                     }
+                }
+
+                // Set material
+                static bool material_checkBox = false;
+                gui->SetCheckBox("Object material configure", &material_checkBox);
+                static int limits[2] = { 0, 1 };
+                if (material_checkBox) {
+                    static float ambient[3];
+                    ToFloat3<glm::vec3, float>(scene->GetChosenObject()->GetAmbient(), ambient);
+                    gui->SetVec3("Set Ambient", ambient, limits);
+                    scene->GetChosenObject()->SetAmbient(ToVec3<float, glm::vec3>(ambient));
+
+                    static float diffuse[3];
+                    ToFloat3<glm::vec3, float>(scene->GetChosenObject()->GetDiffuse(), diffuse);
+                    gui->SetVec3("Set Diffuse", diffuse, limits);
+                    scene->GetChosenObject()->SetDiffuse(ToVec3<float, glm::vec3>(diffuse));
+
+                    static float specular[3];
+                    ToFloat3<glm::vec3, float>(scene->GetChosenObject()->GetSpecular(), specular);
+                    gui->SetVec3("Set Specular", specular, limits);
+                    scene->GetChosenObject()->SetSpecular(ToVec3<float, glm::vec3>(specular));
+
+                    static float shininess;
+                    shininess = scene->GetChosenObject()->GetShininess();
+                    gui->SetFloat("SetShininess", shininess, 0.0f, 32.0f);
+                    scene->GetChosenObject()->SetShininess(shininess);
                 }
             }
             ImGui::End();
@@ -203,7 +242,7 @@ void MouseClickCallback(GLFWwindow* window, int button, int action, int mods)
     {
         double mouseX, mouseY; glfwGetCursorPos(window, &mouseX, &mouseY);
         // float depth; glReadPixels(mouseX, mouseY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-        scene->CheckClicked(mouseX, mouseY);
+        if(scene->GetChosenObject() == nullptr) scene->CheckClicked(mouseX, mouseY);
     }
     if (!bCatchMouse && button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
