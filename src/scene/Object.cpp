@@ -2,11 +2,11 @@
 
 // Constructor(s)
 
-Object::Object(const char* name, glm::vec3 pos, glm::vec3 size) :
+Object::Object(const char* name, glm::vec3 pos, glm::vec3 size, GLboolean bUseTexture) :
     m_name(name),
     m_position(pos), // 默认位置为原点
     m_size(size), // 默认尺寸为单位大小
-    m_rotation(1,0,0,0), m_yaw(0.0f),m_pitch(0.0f),m_roll(0.0f),
+    m_rotation(1, 0, 0, 0), m_yaw(0.0f), m_pitch(0.0f), m_roll(0.0f),
     m_model(1.0f),
     m_color(1.0f), // 默认颜色为白色
     m_shown(true), // 默认显示对象
@@ -14,9 +14,11 @@ Object::Object(const char* name, glm::vec3 pos, glm::vec3 size) :
     m_bShowBox(false),
     m_VAO(0), // 默认VAO为0
     m_count(0), // 默认顶点数量为0
+    lightMethod(0),
+    m_ambient(1.0f, 0.5f, 0.31f), m_diffuse(0.5f), m_specular(0.5f), m_shininess(32.0f),
     m_shader("default"), // 默认着色器名称为空
+    m_bUseTexture(bUseTexture),
     m_texture("default"), // 默认纹理名称为空
-    m_material("default"), // 默认材质名称为空
     m_bBoxMin(1.0f),
     m_bBoxMax(0.0f),
     m_depth(1.0f)
@@ -44,7 +46,7 @@ void Object::Draw() {
     m_model = glm::rotate(m_model, glm::radians(m_roll), glm::vec3(0, 0, 1));// Rotation
     m_model = glm::scale(m_model, m_size);                                            // Scale
 
-    UpdateResources(true);
+    UpdateResources(m_bUseTexture);
 
     if (this->m_shown) {
         glBindVertexArray(m_VAO);
@@ -53,7 +55,7 @@ void Object::Draw() {
     }
 
     if (this->m_clicked) { // bShowBBox
-        this->ShowBBox();
+        this->Show2DBBox();
     }
 }
 
@@ -92,7 +94,6 @@ void Object::SetShown(bool bCanSee)                     { this->m_shown    = bCa
 
 void Object::SetShader(const std::string Shader)        { this->m_shader   = Shader; }
 void Object::SetTexture(const std::string Texture)      { this->m_texture  = Texture; }
-void Object::SetMaterial(const std::string Material)    { this->m_material = Material; }
 
 void Object::SetPosition(glm::vec3 new_position)        { this->m_position = new_position; }
 void Object::SetSize(glm::vec3 new_size)                { this->m_size     = new_size; }
@@ -128,50 +129,23 @@ float Object::GetYaw() const { return this->m_yaw; }
 float Object::GetRoll() const { return this->m_roll; }
 
 
-// Update material, shader, texture
-void Object::UpdateMaterial() {
-    // 根据传入的Material设置Shader
-    if (m_shader == "default") {
-        ResourceManager::GetShader(m_shader).SetInteger("tex", 0);
-        ResourceManager::GetShader(m_shader).SetVector3f("color", m_color);
-        return;
-    }
-    if (ResourceManager::CheckMaterial(m_material)) {
-        std::string category = ResourceManager::GetMaterial(m_material).GetCategory();
-        if (category == m_shader) {
-            ResourceManager::GetMaterial(m_material).UpdateShader(ResourceManager::GetShader(m_shader));
-        }
-        else {
-            std::cerr << "Warning: Material '" << m_material << "''s category" << category << " does not match " << "Shader '" << m_shader << "'!" << std::endl;
-            std::cerr << "Use default shader instead!" << std::endl;
-
-            m_shader = "default";
-            ResourceManager::GetShader(m_shader).SetInteger("tex", 0);
-            ResourceManager::GetShader(m_shader).SetVector3f("color", m_color);
-            return;
-        }
-    }
-    else {
-        std::cerr << "Warning: Material '" << m_material << "' does not exist!" << std::endl;
-        std::cerr << "Use default shader instead!" << std::endl;
-
-        m_shader = "default";
-        ResourceManager::GetShader(m_shader).SetInteger("tex", 0);
-        ResourceManager::GetShader(m_shader).SetVector3f("color", m_color);
-        return;
-    }
-}
 void Object::UpdateShader(bool bUseTexture) {
+    ResourceManager::GetShader(m_shader).SetInteger("lightMethod", lightMethod);
     ResourceManager::GetShader(m_shader).SetMatrix4("model", m_model);
     ResourceManager::GetShader(m_shader).SetBoolean("bUseTexture", bUseTexture);
     ResourceManager::GetShader(m_shader).Use();
+}
+void Object::UpdateMaterial()
+{
+    ResourceManager::GetShader(m_shader).SetVector3f("material.ambient", m_ambient);
+    ResourceManager::GetShader(m_shader).SetVector3f("material.diffuse", m_diffuse);
+    ResourceManager::GetShader(m_shader).SetVector3f("material.specular", m_specular);
+    ResourceManager::GetShader(m_shader).SetFloat("material.shininess", m_shininess);
 }
 void Object::UpdateTexture() {
     glActiveTexture(GL_TEXTURE0);
     ResourceManager::GetTexture(m_texture).Bind();
 }
-
-
 
 
 // Bounding Box
@@ -219,7 +193,8 @@ void Object::Get2DBBox(glm::mat4 projection, glm::mat4 view, float screenWidth, 
 
     m_depth = (depthMin + depthMax) * 0.5;
 }
-void Object::ShowBBox() {
+
+void Object::Show2DBBox() {
 
     GLfloat vertices[] = {
         m_boxMin.x, m_boxMin.y,
@@ -323,24 +298,5 @@ void Object::BindVAO() {
     glDeleteBuffers(1, &cubeVBO);
 }
 
-
-// Tools function
-// vec4: (a, theta)
-// quat: (a sin(theta/2), cos(theta/2))
-glm::vec4 Object::ToQuat(glm::vec4 vec4)
-{
-    glm::vec3 a = glm::vec3(vec4);
-    float theta = vec4[3];
-    return { a * glm::sin(theta / 2), glm::cos(theta / 2) };
-
-}
-
-glm::vec4 Object::QuaternionMultiplication(glm::vec4 q1, glm::vec4 q2) {
-    float w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
-    float x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
-    float y = q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x;
-    float z = q1.w * q2.z + q1.x * q2.y - q1.y * q2.x + q1.z * q2.w;
-    return glm::vec4(x, y, z, w);
-}
 
 
