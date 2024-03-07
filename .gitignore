@@ -8,3 +8,6 @@ RayTracing.vcxproj.user
 doc/default.txt
 doc/test.cpp
 doc/test.exe
+*.vcxproj
+*.filters
+*.user
