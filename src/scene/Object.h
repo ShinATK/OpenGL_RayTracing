@@ -19,6 +19,7 @@ private:
     GLboolean   m_shown; // draw object or not
     GLboolean   m_clicked; // cursor clicked or not
     GLboolean   m_bShowBox; // 是否显示 bounding box
+    int lightMethod; // phong or blinn-phong
 
     // Vertice
     GLuint      m_VAO;
@@ -27,9 +28,14 @@ private:
     // Shader name
     std::string m_shader;
     // Texture name
+    GLboolean   m_bUseTexture;
     std::string m_texture;
-    // Material name
-    std::string m_material;
+
+    // Material
+    glm::vec3 m_ambient;
+    glm::vec3 m_diffuse;
+    glm::vec3 m_specular;
+    float m_shininess;
 
     // Bounding Box
     float       m_depth;
@@ -40,7 +46,7 @@ private:
 
 public:
     // Constructor(s)
-    Object(const char* name, glm::vec3 pos, glm::vec3 size=glm::vec3(1.0f));
+    Object(const char* name, glm::vec3 pos = glm::vec3(0.0f), glm::vec3 size = glm::vec3(1.0f), GLboolean bUseTexture = false);
     virtual ~Object();
 
     // Draw
@@ -54,14 +60,28 @@ public:
     bool CheckClick(double mouseX, double mouseY) const;
 
     // Bounding Box
-    void ShowBBox();
+    void Show2DBBox();
     void Get2DBBox(glm::mat4 projection, glm::mat4 view, float screenWidth, float screenHeight);
 
+    int GetLightMethod() const { return this->lightMethod; }
+    void SetLightMethod(int light_model) { this->lightMethod = light_model; }
 
-    // Input
-    void RotateX(float angle);
-    void RotateY(float angle);
-    void RotateZ(float angle);
+    void SetUseTexture(GLboolean use_texture) { this->m_bUseTexture = use_texture; }
+    GLboolean GetUseTexture() const { return this->m_bUseTexture; }
+
+    void SetAmbient(glm::vec3 new_ambient) { m_ambient = new_ambient; }
+    glm::vec3 GetAmbient() const { return m_ambient; }
+
+    void SetDiffuse(glm::vec3 new_diffuse) { m_diffuse = new_diffuse; }
+    glm::vec3 GetDiffuse() const { return m_diffuse; }
+
+    void SetSpecular(glm::vec3 new_specular) { m_specular = new_specular; }
+    glm::vec3 GetSpecular() const { return m_specular; }
+
+    void SetShininess(float new_shininess) { m_shininess = new_shininess; }
+    float GetShininess() const { return m_shininess; }
+
+
 
 
     // Set
@@ -72,11 +92,9 @@ public:
 
     void SetShader(const std::string Shader);
     void SetTexture(const std::string Texture);
-    void SetMaterial(const std::string Material);
 
     void SetPosition(glm::vec3 new_position);
     void SetSize(glm::vec3 new_size);
-    void SetRotation(float angle, int axis);
 
     void SetYaw(float angle);
     void SetPitch(float angle);
@@ -101,10 +119,6 @@ private:
     void UpdateShader(bool bUseTexture);
     void UpdateMaterial(); // 传入自定义材质数据，并调用对应的Shader
     void UpdateTexture();
-
-    glm::vec4 ToQuat(glm::vec4 vec4);
-    glm::vec4 ToVec4(glm::vec4 quat);
-    glm::vec4 QuaternionMultiplication(glm::vec4 q1, glm::vec4 q2);
 };
 
 
