@@ -2,8 +2,6 @@
 
 #include "../resource_manager/ResourceManager.h"
 
-#include <vector>
-
 class Object
 {
 private:
@@ -22,7 +20,6 @@ private:
 
     // Vertice
     GLuint      m_VAO;
-    GLuint      m_count;
 
     // Shader name
     std::string m_shader;
@@ -47,12 +44,12 @@ private:
 
 public:
     // Constructor(s)
-    Object(const char* name, glm::vec3 pos = glm::vec3(0.0f), glm::vec3 size = glm::vec3(1.0f), GLboolean bUseTexture = GL_TRUE);
+    Object(const char* name, std::string texture, GLboolean bUseTexture = GL_TRUE, glm::vec3 pos = glm::vec3(0.0f), glm::vec3 size = glm::vec3(1.0f));
     virtual ~Object();
 
     // Draw
     virtual void BindVAO();
-    virtual void Draw();
+    virtual void Draw(std::string new_shader);
 
     // Bounding Box
     void Show2DBBox();
@@ -71,7 +68,7 @@ public:
     bool GetShow2DBBox() const { return this->m_bShowBox; }
     void SetShow2DBox(bool bShow) { this->m_bShowBox = bShow; }
 
-    bool GetShonw() const { return this->m_shown; }
+    bool GetShown() const { return this->m_shown; }
     void SetShown(bool bCanSee) { this->m_shown = bCanSee; }
 
     int GetLightMethod() const { return this->lightMethod; }
