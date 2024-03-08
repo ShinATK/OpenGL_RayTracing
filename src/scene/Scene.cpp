@@ -28,11 +28,8 @@ Scene::Scene(GLFWwindow* window, const GLuint width, const GLuint height) :m_wid
 Scene::~Scene() {
 	delete m_camera; m_camera = nullptr;
 	m_chosenObject = nullptr;
-	ClearObjects();
 
-	for (auto& light : Lights) {
-		delete light; light = nullptr;
-	}
+	ClearAllObject();
 
 	ResourceManager::Clear();
 
@@ -51,21 +48,11 @@ void Scene::Init()
 	ResourceManager::LoadTexture("./resources/textures/wood.png", GL_TRUE, "wood");
 
 	// 创建 objects
-	Objects["Object"]["container"] = new Object("container", glm::vec3(0, 0, -3), glm::vec3(1.0f));
-	Objects["Object"]["container"]->SetShown(false);
-	Objects["Object"]["floor"] = new Object("floor", glm::vec3(0, -1, 0), glm::vec3(10.0f, 1.0f, 10.0f));
+	Objects["container"] = new Object("container", "container", GL_TRUE, glm::vec3(0, 0, -3), glm::vec3(1.0f));
+	Objects["floor"] = new Object("floor", "wood", GL_TRUE, glm::vec3(0, -1, 0), glm::vec3(10.0f, 1.0f, 10.0f));
 
 	// 创建 lights
-	Objects["Light"]["light"] = new Object("light", glm::vec3(1.2f, 1.0f, 2.0f), glm::vec3(0.5f), GL_FALSE);
-	Objects["Light"]["light"]->SetShader("default");
-	Lights.push_back(new Light(Objects["Light"]["light"]->GetPosition()));
-}
-
-void Scene::Render(GLfloat dt)
-{
-	// Render
-	if(this->m_showSkybox) this->DrawSkybox(ResourceManager::GetShader("skybox"));
-	this->DrawObjects();
+	Lights["light01"] = new Light(glm::vec3(1.2f, 1.0f, 2.0f));
 }
 
 void Scene::ProcessInput(GLfloat dt)
@@ -84,67 +71,61 @@ void Scene::Update()
 	// 防止 skybox 随着 camera 移动而移动
 	ResourceManager::GetShader("skybox").SetMatrix4("view", glm::mat4(glm::mat3(view)));
 
-	// Update position
-	
-	// 更新 light 位置（light 跟随可视化光源位置的 cube 移动）
-	Lights[0]->m_position = Objects["Light"]["light"]->GetPosition();
-
 	// Update Bounding Box
 	if (m_chosenObject != nullptr)
 		m_chosenObject->Get2DBBox(m_projection, view, m_width, m_height);
 
 	// Update light uniform
-	ResourceManager::GetShader("basicLight").SetVector3f("light.position", Lights[0]->m_position);
-	ResourceManager::GetShader("basicLight").SetVector3f("light.ambient", Objects["Light"]["light"]->GetColor() * Lights[0]->m_ambient);
-	ResourceManager::GetShader("basicLight").SetVector3f("light.diffuse", Objects["Light"]["light"]->GetColor() * Lights[0]->m_diffuse);
-	ResourceManager::GetShader("basicLight").SetVector3f("light.specular", Objects["Light"]["light"]->GetColor() * Lights[0]->m_specular);
-	
-	// TODO: 设置 Enum 来规范 Category，Shader， Material 的名称
-	// TODO: 自动遍历并应用
-	// TODO：增加 Object 的 shader、texture、material 在 Init 中的初始化
-	// TODO：增加 shader、texture、material 在 Update 中的更改
-	/*		Category	Name			Shader			Texture */
-	ApplyTo("Object",	"container",	"basicLight",		"container");
-	ApplyTo("Object",	"floor",		"basicLight",		"wood");
-	ApplyTo("Light",	"light",		"default",			"default");
+	ResourceManager::GetShader("basicLight").SetVector3f("light.position", Lights["light01"]->GetPosition());
+	ResourceManager::GetShader("basicLight").SetVector3f("light.ambient", Lights["light01"]->GetAmbient());
+	ResourceManager::GetShader("basicLight").SetVector3f("light.diffuse", Lights["light01"]->GetDiffuse());
+	ResourceManager::GetShader("basicLight").SetVector3f("light.specular", Lights["light01"]->GetSpecular());
 }
 
-void Scene::ClearObject(std::string category, std::string name)
+void Scene::Render()
 {
-	auto it = Objects[category].find(name);
-	if (it != Objects[category].end())
-	{
-		delete it->second;
-		Objects[category].erase(it);
-	}
-	else
-	{
-		std::cerr << "Warning: Object '" << name << "' not found!" << std::endl;
-		std::cerr << "Delete Failed!" << std::endl;
-	}
-	
+	// Render
+	if (this->m_showSkybox) this->DrawSkybox(ResourceManager::GetShader("skybox"));
+	this->DrawObjects();
 }
 
-void Scene::ClearObjects()
+void Scene::DrawObjects()
 {
-	for (auto& category : Objects)
+	for (auto& item : Objects)
 	{
-		for (auto& item : category.second)
-		{
-			delete item.second; item.second = nullptr;
-		}
-		category.second.clear();
+		if (item.second->GetShown())
+			item.second->Draw("basicLight");
+	}
+	for (auto& item : Lights)
+	{
+		if (item.second->GetShown())
+			item.second->Draw("default");
+	}
+}
+
+
+void Scene::ClearAllObject()
+{
+	for (auto& item : Objects)
+	{
+		delete item.second; item.second = nullptr;
 	}
 	Objects.clear();
+
+	for (auto& item : Lights)
+	{
+		delete item.second; item.second = nullptr;
+	}
+	Lights.clear();
 }
 
 
 void Scene::ApplyTo(std::string Category, std::string ObjectName, std::string Shader, std::string Texture)
 {
-	if (Objects[Category].find(ObjectName) != Objects[Category].end())
+	if (Objects.find(ObjectName) != Objects.end())
 	{
-		Objects[Category][ObjectName]->SetShader(Shader);
-		Objects[Category][ObjectName]->SetTexture(Texture);
+		Objects[ObjectName]->SetShader(Shader);
+		Objects[ObjectName]->SetTexture(Texture);
 	}
 	else
 	{
@@ -153,31 +134,17 @@ void Scene::ApplyTo(std::string Category, std::string ObjectName, std::string Sh
 	}
 }
 
-void Scene::DrawObjects()
-{
-	// TODO: 遍历Objects，自动绘制shown=true的object，将应用shader的步骤放在Update中
-	for (auto& category : Objects)
-	{
-		for (auto& item : category.second)
-		{
-			item.second->Draw();
-		}
-	}
-}
+
 
 void Scene::CheckClicked(double mouseX, double mouseY)
 {
 	float pre_depth = 1.0f;
-	for (auto& category : Objects) {
-		if (category.first == "player") continue;
-		for (auto& item : category.second) {
-			item.second->Get2DBBox(m_projection, m_camera->GetViewMatrix(), m_width, m_height);
-			if (item.second->CheckClick(mouseX, mouseY) && pre_depth > item.second->GetDepth()) {
-				// TODO: CheckClick 里会进行是否点击命中的设置，导致目前出现的bug。
-				item.second->SetClicked(true);
-				this->AddClicked(item.second);
-				pre_depth = item.second->GetDepth();
-			}
+	for (auto& item : Objects) {
+		item.second->Get2DBBox(m_projection, m_camera->GetViewMatrix(), m_width, m_height);
+		if (item.second->CheckClick(mouseX, mouseY) && pre_depth > item.second->GetDepth()) {
+			item.second->SetClicked(true);
+			this->AddClicked(item.second);
+			pre_depth = item.second->GetDepth();
 		}
 	}
 }
