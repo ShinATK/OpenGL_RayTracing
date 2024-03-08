@@ -1,5 +1,6 @@
 #include "./components/GLWindow.h"
 #include "./components/GUI.h"
+#include "./components/Renderer.h"
 #include "./scene/Scene.h"
 #include "./scene/tools.h"
 
@@ -30,9 +31,7 @@ GUI* gui;
 
 Scene* scene;
 
-// GUI's
-static bool configurePosition = false;
-
+Renderer* shadowMap;
 
 int main()
 {
@@ -55,6 +54,9 @@ int main()
     // 初始化 GUI
     gui = new GUI(window->GetWindow());
     
+    // 创建深度贴图
+    shadowMap = new Renderer(1024, 1024);
+
     GLfloat delta_time      = 0.0f;
     GLfloat last_frame_time = 0.0f;
 
@@ -64,8 +66,7 @@ int main()
 /* Window Setting */
         HideCursor(window->GetWindow(), bCatchMouse);
         glClearColor(gui->clearColor.x * gui->clearColor.w, gui->clearColor.y * gui->clearColor.w, gui->clearColor.z * gui->clearColor.w, gui->clearColor.w);
-        glEnable(GL_DEPTH_TEST); 
-        //glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);  //glEnable(GL_CULL_FACE);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // TODO:封装到 GLWindow中，用引用返回
@@ -117,7 +118,7 @@ int main()
                 if (pos_checkBox)
                 {
                     static float    pos[3];
-                    int             pos_limits[2] = {-10, 10};
+                    int             pos_limits[2] = { -10, 10 };
                     ToFloat3<glm::vec3, float>(scene->GetChosenObject()->GetPosition(), pos);
                     gui->SetVec3("Set Position", pos, pos_limits);
                     scene->GetChosenObject()->SetPosition(ToVec3<float, glm::vec3>(pos));
@@ -148,14 +149,16 @@ int main()
                 {
                     static int axis = -1;
                     static float angle[3];
-                        angle[0] = scene->GetChosenObject()->GetYaw();
-                        angle[1] = scene->GetChosenObject()->GetPitch();
-                        angle[2] = scene->GetChosenObject()->GetRoll();
-                    if (gui->SetRadioButton("Axis X", &axis, 0) == 0) { ImGui::SameLine();  
+                    angle[0] = scene->GetChosenObject()->GetYaw();
+                    angle[1] = scene->GetChosenObject()->GetPitch();
+                    angle[2] = scene->GetChosenObject()->GetRoll();
+                    if (gui->SetRadioButton("Axis X", &axis, 0) == 0) {
+                        ImGui::SameLine();
                         gui->SetFloat("Set Yaw", angle[0], -180, 180);
                         scene->GetChosenObject()->SetYaw(angle[0]);
                     }
-                    if (gui->SetRadioButton("Axis Y", &axis, 1) == 1) {ImGui::SameLine(); 
+                    if (gui->SetRadioButton("Axis Y", &axis, 1) == 1) {
+                        ImGui::SameLine();
                         gui->SetFloat("Set Pitch", angle[1], -180, 180);
                         scene->GetChosenObject()->SetPitch(angle[1]);
                     }
@@ -204,7 +207,7 @@ int main()
         scene->Update();
 
 /* Render */
-        scene->Render(delta_time);
+        scene->Render();
         gui->Render();                              // Render GUI widget
         
 
