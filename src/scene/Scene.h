@@ -5,21 +5,12 @@
 #include "../resource_manager/ResourceManager.h"
 
 #include "Object.h"
+#include "Light.h"
 
 #include <unordered_map>
 
 template<typename T>
 void ClearPtr(std::vector<T*> ptr);
-
-struct Light {
-	glm::vec3 m_position;
-	glm::vec3 m_ambient;
-	glm::vec3 m_diffuse;
-	glm::vec3 m_specular;
-	Light(glm::vec3 position, glm::vec3 ambient = glm::vec3(0.05f), glm::vec3 diffuse = glm::vec3(1.0f), glm::vec3 specular = glm::vec3(0.3f)) :
-		m_position(position), m_ambient(ambient), m_diffuse(diffuse), m_specular(specular)
-	{}
-};
 
 class Scene
 {
@@ -35,11 +26,9 @@ private:
 
 	GLboolean			m_showSkybox;
 
-	//TODO：增加检测，设置物体上限
-	std::unordered_map<std::string, std::unordered_map<std::string, Object*>> Objects;
-
 	// TODO: 将light作为object的派生类实现
-	std::vector<Light*> Lights;
+	std::unordered_map<std::string, Object*> Objects;
+	std::unordered_map<std::string, Light*> Lights;
 
 public:
 	Scene(GLFWwindow* window, const GLuint width, const GLuint height);
@@ -49,12 +38,10 @@ public:
 
 	void ProcessInput(GLfloat dt);
 	void Update();
-	void Render(GLfloat dt);
+	void Render();
 
 	// Add/remove objects into scene
-	void AddObject(Object* object);
-	void ClearObject(std::string category, std::string name);
-	void ClearObjects();
+	void ClearAllObject();
 
 	// Configure
 	void ApplyTo(std::string Category, std::string ObjectName, std::string Shader = "default", std::string Texture = "default");
