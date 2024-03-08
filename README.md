@@ -14,7 +14,7 @@
 
 | Position | Size | Rotate |
 |----------|------|--------|
-| ![](img/GUI_Control_Position.gif) | ![](img/GUI_Control_Rotation.gif)  | ![](img/GUI_Control__Size.gif) |
+| ![](img/GUI_Control_Position.gif) | ![](img/GUI_Control_Rotation.gif)  | ![](img/GUI_Control_Size.gif) |
 
 
 - [x] 缩放不影响贴图
