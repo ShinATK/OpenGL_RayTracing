@@ -18,8 +18,8 @@
 **存在问题**：从光源生成大量的射线十分消耗性能，实时渲染不可取。
 
 **折中方案**：
-- 从光源位置出发渲染场景的透视图，将场景的深度信息存储到纹理，这个纹理叫做**深度贴图（depth map）**。
-- 在相机视角渲染场景时，顺便计算**该点在光源视角下的深度值**
+- 从光源位置出发渲染场景的透视图，将场景的深度信息存储到纹理，这个纹理叫做**深度贴图（depth map）**
+- 在相机视角渲染场景时，顺便计算**该点在光源视角下（最近的）深度值**
 - 从深度贴图中获取对应位置的深度信息
 - 如果深度值更小说明该点被照亮，否则说明处于阴影。
 
@@ -61,7 +61,7 @@
 
 即 $z_C - bias$ 或 $z_B + bias$
 
-从而使得 $z_C - bias < z_B$ 使得 C 点被判定为照亮
+从而使得 $z_C < z_B + bias$ 使得 C 点被判定为照亮
 
 ![](../img/ShadowAcne_ShadowBias.gif)
 
@@ -70,10 +70,111 @@
 
 ### 阴影悬浮 (Peter Panning) 
 
+如果继续调大 bias 发现阴影会逐渐和物体分离，呈现出“物体悬空”的效果
 
+![](../img/ShadowBias_PeterPanning.gif)
+
+原因是：**阴影偏移本质上是改变了片段在深度贴图中的映射**
+
+借助之前的平行光参考图，对每一次的点 B 的参考深度值都进行偏移，相当于将贴图映射整体移动了一定距离。从而导致本该出现阴影的地方，取到了被照亮的位置的深度值。
 
 
 ### 正面剔除
 
+可以直接通过开启正面剔除来消除外部的 Shadow Acne
+
+|开启 Cull Front Face|关闭 Cull Front Face|
+|---|---|
+|![](../img/CullFrontFaceOn_NoShadowBias.png)|![](../img/CullFrontFaceOff_NoShadowBias.png)|
+
+**实际上，正面剔除只是将 Shadow Acne 出现位置进行的更改，如果此时进入立方体内部，会发现在内部出现了 Shadow Acne**
+
+![](../img/CullFrontFaceOn_ShadowAcneInside.png)
+
+
+同时，这种方法由于精度问题会导致立方体和阴影交界处出现漏光现象
+
+![](../img/CullFrontFaceOn_Light.png)
+
+以及，这种方法只对**具有体积的物体**可以生效。
+
+**正面剔除能够消除部分 Shadow Acne 的原因**：
+
+![](../img/CUllFrontFace.png)
+
+参考上图，剔除正面时，渲染到 DepthMap 中的深度信息是图中红色部分。很显然，此时物体的 AB 和 AC 两个面的深度值一定比 DepthMap 中对应位置更小，因为必定会被判定为照亮。
+
+如果不进行正面剔除，DepthMap 中存储的深度信息为图中灰色部分。而深度贴图由于精度问题会损失很多位置的深度值，从而导致多个位置共用一个参考深度，最终导致了 Shadow Acne。
+
+**综上**，Cull Front Face 其实本质上和 Shadow Bias 并没有什么区别，二者根本上都是**将用于判断是否处于阴影中的参考深度值进行了一定的调整**。
+
 
 ### 光的视锥外阴影问题
+
+先前的问题中，我将这部分问题修正。这里进行单独讨论。
+
+正常来说，直接使用 DepthMap 而不对 Shadow Acne 修正会出现如下图所示的问题，即：有一部分区域一直处于阴影之中。
+
+![](../img/ShadowArea.png)
+
+
+如果需要设置阴影的区域比较小，可以直接设置区域外固定处于阴影或者固定被照亮（不产生阴影），效果图如之前展示所示。
+
+OpenGL 中解决办法如下：
+
+```cpp
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+GLfloat borderColor[] = {1.0, 1.0, 1.0, 1.0};
+glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+```
+
+即，设置纹理 `GL_CLAMP_TO_BORDER` 和边缘位置的颜色，上方代码设置边缘位置为白色，从而使得区域外固定照亮并不产生阴影
+
+此时运行发现，横向部分的阴影问题解决，但是后方仍然有一大片部分处于阴影。
+
+![](../img/ShadowFarPlane.png)
+
+**原因**：这是因为这部分区域超出了光源的投影远平面，从而导致一直比 DepthMap 中的深度值更大，判定为处于阴影之中。
+
+这里的解决办法也可以直接在着色器中进行设置，计算得到片段在光投影空间中的深度值 `projCoords.z` 之后判断是否大于 1，表示片段是否位于远平面之外，固定这部分的 `shadow=0`，即同样设置为不生成阴影。
+
+最终解决如[README.md](../README.md)中所示
+
+# 其他阴影技术
+
+![](../img/ShadowTech.png)
+
+## Percentage-Closer Filtering(PCF)
+
+**目的**：模拟阴影的柔和边缘，实现软阴影
+
+**核心思想**：从深度贴图中多次采样计算平均值
+
+```cpp
+float shadow = 0.0;
+vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+for(int x = -1; x <= 1; ++x)
+{
+    for(int y = -1; y <= 1; ++y)
+    {
+        float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+        shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+    }    
+}
+shadow /= 9.0;
+```
+
+效果：
+
+![](../img/Shadow_PCF.png)
+
+**存在问题**
+- **预过滤困难**：需要对深度贴图多次采样模糊阴影边缘。由于每次采样需要访问深度贴图中的多个像素，因此在进行预过滤时，需要考虑如何确保不会丢失过多的细节或者导致阴影质量下降
+- **各向异性过滤困难**：采样窗口固定，处理各向异性阴影效果（可能需要修改的采样窗口）时存在困难
+- **Mipmap 使用受限**：PCF 通常只能在深度贴图的基本级别上进行采样，而不能有效地利用深度贴图的 mipmap 层级结构。由于 PCF 的采样窗口大小是固定的，因此在使用 mipmap 时，需要考虑如何动态调整采样窗口大小以适应不同的 mipmap 层级，以获得更好的效果
+
+
+## Variance shadow maps(VSM)
+
+
+
