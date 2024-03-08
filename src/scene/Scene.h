@@ -1,7 +1,8 @@
 #pragma once
 
 #include "../components/Camera.h"
-
+#include "../components/Renderer.h"
+#include "../components/GUI.h"
 #include "../resource_manager/ResourceManager.h"
 
 #include "Object.h"
@@ -20,6 +21,7 @@ private:
 	GLuint				m_height;
 
 	Camera*				m_camera;
+	Renderer*			m_shadowMap;
 	glm::mat4			m_projection;
 
 	Object*				m_chosenObject; // chosen object
@@ -48,6 +50,7 @@ public:
 
 	// Draw
 	void DrawObjects();
+	void DrawLights();
 
 
 	// Add clicked object

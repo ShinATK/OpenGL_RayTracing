@@ -20,7 +20,7 @@ private:
 	GLuint m_VAO;
 
 public:
-	Light(glm::vec3 position, glm::vec3 color=glm::vec3(1.0f), glm::vec3 ambient = glm::vec3(0.05f), glm::vec3 diffuse = glm::vec3(1.0f), glm::vec3 specular = glm::vec3(0.3f));
+	Light(glm::vec3 position, glm::vec3 color=glm::vec3(1.0f), glm::vec3 ambient = glm::vec3(0.1f), glm::vec3 diffuse = glm::vec3(1.0f), glm::vec3 specular = glm::vec3(0.3f));
 
 	~Light();
 

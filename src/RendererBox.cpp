@@ -1,6 +1,5 @@
 #include "./components/GLWindow.h"
 #include "./components/GUI.h"
-#include "./components/Renderer.h"
 #include "./scene/Scene.h"
 #include "./scene/tools.h"
 
@@ -31,8 +30,6 @@ GUI* gui;
 
 Scene* scene;
 
-Renderer* shadowMap;
-
 int main()
 {
     // Create window
@@ -54,11 +51,11 @@ int main()
     // 初始化 GUI
     gui = new GUI(window->GetWindow());
     
-    // 创建深度贴图
-    shadowMap = new Renderer(1024, 1024);
-
     GLfloat delta_time      = 0.0f;
     GLfloat last_frame_time = 0.0f;
+
+    glEnable(GL_DEPTH_TEST);  
+    glEnable(GL_CULL_FACE);
 
     // 主循环，处理窗口事件
     while (!window->ShouldClose())
@@ -66,7 +63,7 @@ int main()
 /* Window Setting */
         HideCursor(window->GetWindow(), bCatchMouse);
         glClearColor(gui->clearColor.x * gui->clearColor.w, gui->clearColor.y * gui->clearColor.w, gui->clearColor.z * gui->clearColor.w, gui->clearColor.w);
-        glEnable(GL_DEPTH_TEST);  //glEnable(GL_CULL_FACE);
+        
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // TODO:封装到 GLWindow中，用引用返回
@@ -99,13 +96,13 @@ int main()
         if (scene->GetChosenObject()) {
             ImGui::Begin(scene->GetChosenObject()->GetName());
             {
-                // Set Light Method
-                static bool show_2DBBox = scene->GetChosenObject()->GetShow2DBBox();
+                // Set Screen Space bounding box
+                static bool show_2DBBox; show_2DBBox = scene->GetChosenObject()->GetShow2DBBox();
                 gui->SetCheckBox("Show 2D BBox", &show_2DBBox);
                 scene->GetChosenObject()->SetShow2DBox(show_2DBBox);
 
                 // Set Light Method
-                static int light_method = scene->GetChosenObject()->GetLightMethod(); // phong by default
+                static int light_method; light_method = scene->GetChosenObject()->GetLightMethod(); // phong by default
                 ImGui::Text("Light Method"); ImGui::SameLine();
                 gui->SetRadioButton("Phong", &light_method, 0); ImGui::SameLine();
                 gui->SetRadioButton("Blinn-Phong", &light_method, 1);
@@ -170,7 +167,7 @@ int main()
                 }
 
                 // Set Texture
-                static bool texture_checkBox = scene->GetChosenObject()->GetUseTexture();
+                static bool texture_checkBox; texture_checkBox = scene->GetChosenObject()->GetUseTexture();
                 gui->SetCheckBox("Object texture configrue", &texture_checkBox);
                 scene->GetChosenObject()->SetUseTexture(texture_checkBox);
 

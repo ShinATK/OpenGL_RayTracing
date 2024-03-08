@@ -1,6 +1,6 @@
 #include "Camera.h"
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : position_(position), world_up_(up), yaw_(yaw), pitch_(pitch), front_(kFront), movement_speed_(kMovementSpeed), mouse_sensitivity_(kSensitivity), zoom_(kZoom), near_(kNear), far_(kFar), m_bLockOnFloor(true)
+Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : position_(position), world_up_(up), yaw_(yaw), pitch_(pitch), front_(kFront), movement_speed_(kMovementSpeed), mouse_sensitivity_(kSensitivity), zoom_(kZoom), near_(kNear), far_(kFar), m_bLockOnFloor(false)
 {
 	this->UpdateCameraVectors();
 }

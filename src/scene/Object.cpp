@@ -57,6 +57,7 @@ void Object::Draw(std::string new_shader) {
 
     if (m_bUseTexture) {
         ResourceManager::GetShader(m_shader).SetVector3f("scaleFactor", m_size);
+        ResourceManager::GetShader(m_shader).SetInteger("diffuseTex", 0);
         glActiveTexture(GL_TEXTURE0);
         ResourceManager::GetTexture(m_texture).Bind();
     }
@@ -139,12 +140,12 @@ void Object::Show2DBBox() {
 
     GLfloat vertices[] = {
         m_boxMin.x, m_boxMin.y,
-        m_boxMin.x, m_boxMax.y,
         m_boxMax.x, m_boxMin.y,
-        m_boxMax.x, m_boxMax.y
+        m_boxMax.x, m_boxMax.y,
+        m_boxMin.x, m_boxMax.y
     };
     GLint indices[] = {  // 注意索引从0开始!
-        0, 1, 3,   // 第一个三角形
+        0, 1, 2,   // 第一个三角形
         2, 3, 0    // 第二个三角形
     };
     GLuint VBO, VAO, EBO;
@@ -169,6 +170,7 @@ void Object::Show2DBBox() {
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);

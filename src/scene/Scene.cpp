@@ -1,7 +1,11 @@
 #include "Scene.h"
 
-Scene::Scene(GLFWwindow* window, const GLuint width, const GLuint height) :m_width(width), m_height(height), m_window(window), m_camera(nullptr), m_chosenObject(nullptr), Objects(), m_showSkybox(false)
+Scene::Scene(GLFWwindow* window, const GLuint width, const GLuint height) :m_width(width), m_height(height), m_window(window), m_camera(nullptr), m_chosenObject(nullptr), Objects(), m_showSkybox(true)
 {
+	// Shadow map
+	m_shadowMap = new Renderer(1024, 1024);
+	m_shadowMap->InitShadowMap();
+
 	// Camera
 	m_camera = new Camera();
 	m_projection = glm::perspective(m_camera->GetZoom(), (float)m_width / (float)m_height, m_camera->GetNear(), m_camera->GetFar());
@@ -42,17 +46,20 @@ void Scene::Init()
 	// 加载 shader
 	ResourceManager::LoadShader("./resources/shaders/bbox.vert", "./resources/shaders/bbox.frag", "bbox");
 	ResourceManager::LoadShader("./resources/shaders/basicLight.vert", "./resources/shaders/basicLight.frag", "basicLight");
+	ResourceManager::LoadShader("./resources/shaders/simpleShadow.vert", "./resources/shaders/simpleShadow.frag", "simpleShadow");
+	ResourceManager::LoadShader("./resources/shaders/simpleShadowDebug.vert", "./resources/shaders/simpleShadowDebug.frag", "simpleShadowDebug");
 
 	// 加载 texture
 	ResourceManager::LoadTexture("./resources/textures/container.jpg", GL_FALSE, "container");
 	ResourceManager::LoadTexture("./resources/textures/wood.png", GL_TRUE, "wood");
 
 	// 创建 objects
-	Objects["container"] = new Object("container", "container", GL_TRUE, glm::vec3(0, 0, -3), glm::vec3(1.0f));
-	Objects["floor"] = new Object("floor", "wood", GL_TRUE, glm::vec3(0, -1, 0), glm::vec3(10.0f, 1.0f, 10.0f));
+	Objects["container01"] = new Object("container01", "container", GL_TRUE, glm::vec3(0, 0, -1), glm::vec3(1.0f));
+	Objects["floor"] = new Object("floor", "wood", GL_TRUE, glm::vec3(0, -1, 0), glm::vec3(50.0f, 1.0f, 50.0f));
 
-	// 创建 lights
-	Lights["light01"] = new Light(glm::vec3(1.2f, 1.0f, 2.0f));
+	// 创建 lights glm::vec3(2.0f, 1.0f, 2.0f)
+	Lights["light01"] = new Light(glm::vec3(2.0f, 1.0f, 2.0f));
+	Lights["light01"]->SetShown(false);
 }
 
 void Scene::ProcessInput(GLfloat dt)
@@ -76,10 +83,59 @@ void Scene::Update()
 		m_chosenObject->Get2DBBox(m_projection, view, m_width, m_height);
 
 	// Update light uniform
+	// TODO: 放到light class中，UpdateShader()
 	ResourceManager::GetShader("basicLight").SetVector3f("light.position", Lights["light01"]->GetPosition());
 	ResourceManager::GetShader("basicLight").SetVector3f("light.ambient", Lights["light01"]->GetAmbient());
 	ResourceManager::GetShader("basicLight").SetVector3f("light.diffuse", Lights["light01"]->GetDiffuse());
 	ResourceManager::GetShader("basicLight").SetVector3f("light.specular", Lights["light01"]->GetSpecular());
+
+	// 点光源阴影
+	// shadow mapping
+	glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
+	glm::mat4 lightView = glm::lookAt(Lights["light01"]->GetPosition(), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+	m_shadowMap->UpdateShadowMap();
+
+	static bool cull_face = false;
+	ImGui::Begin("Cull Face");
+	{
+		ImGui::Checkbox("On/Off", &cull_face);
+	}
+	ImGui::End();
+
+	if(cull_face) glCullFace(GL_FRONT); // 解决阴影悬浮问题
+	{
+		Shader& shadow_shader = ResourceManager::GetShader("simpleShadow");
+		shadow_shader.SetMatrix4("lightSpaceMatrix", lightSpaceMatrix);
+		for (auto& item : Objects)
+		{
+			if (item.second->GetShown())
+				item.second->Draw("simpleShadow");
+		}
+	}
+	if (cull_face) glCullFace(GL_BACK); // 恢复原本cull
+	m_shadowMap->EndShadowMap(m_width, m_height);
+
+	//Debug DepthMap
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, m_shadowMap->GetDepthMap());
+	//ResourceManager::GetShader("simpleShadowDebug").SetInteger("depthMap", 0);
+	//ResourceManager::GetShader("simpleShadowDebug").Use();
+	//m_shadowMap->DebugShadowMap();
+	
+	//static float shadowBias = 0.005;
+	//ImGui::Begin("shadow bias");
+	//{
+	//	ImGui::SliderFloat("Bias", &shadowBias, 0, 0.1);
+	//}
+	//ImGui::End();
+	//ResourceManager::GetShader("basicLight").SetFloat("shadowBias", shadowBias);
+
+	ResourceManager::GetShader("basicLight").SetMatrix4("lightSpaceMatrix", lightSpaceMatrix);
+	ResourceManager::GetShader("basicLight").SetInteger("shadowMap", 1);
+	ResourceManager::GetShader("basicLight").Use();
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_shadowMap->GetDepthMap());
 }
 
 void Scene::Render()
@@ -87,6 +143,7 @@ void Scene::Render()
 	// Render
 	if (this->m_showSkybox) this->DrawSkybox(ResourceManager::GetShader("skybox"));
 	this->DrawObjects();
+	this->DrawLights();
 }
 
 void Scene::DrawObjects()
@@ -96,6 +153,10 @@ void Scene::DrawObjects()
 		if (item.second->GetShown())
 			item.second->Draw("basicLight");
 	}
+
+}
+void Scene::DrawLights()
+{
 	for (auto& item : Lights)
 	{
 		if (item.second->GetShown())
