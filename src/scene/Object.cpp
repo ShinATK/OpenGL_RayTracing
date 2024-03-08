@@ -2,7 +2,7 @@
 
 // Constructor(s)
 
-Object::Object(const char* name, glm::vec3 pos, glm::vec3 size, GLboolean bUseTexture) :
+Object::Object(const char* name, std::string texture, GLboolean bUseTexture, glm::vec3 pos, glm::vec3 size) :
     m_name(name),
     m_position(pos), // 默认位置为原点
     m_size(size), // 默认尺寸为单位大小
@@ -13,12 +13,11 @@ Object::Object(const char* name, glm::vec3 pos, glm::vec3 size, GLboolean bUseTe
     m_clicked(false), // 默认未选中
     m_bShowBox(true),
     m_VAO(0), // 默认VAO为0
-    m_count(0), // 默认顶点数量为0
     lightMethod(0),
     m_ambient(1.0f, 0.5f, 0.31f), m_diffuse(1.0f, 0.5f, 0.31f), m_specular(0.5f), m_shininess(32.0f),
     m_shader("default"), // 默认着色器名称为空
     m_bUseTexture(bUseTexture),
-    m_texture("default"), // 默认纹理名称为空
+    m_texture(texture), // 默认纹理名称为空
     m_bBoxMin(1.0f),
     m_bBoxMax(0.0f),
     m_depth(1.0f)
@@ -37,14 +36,17 @@ Object::~Object()
 
 // Draw
 
-void Object::Draw() {
-    
+void Object::Draw(std::string new_shader) {
+
+    if(m_shader != new_shader) m_shader = new_shader;
+
     m_model = glm::mat4(1.0f);                                                        // 初始化
     m_model = glm::translate(m_model, m_position);                                    // Translate
     m_model = glm::rotate(m_model, glm::radians(m_yaw), glm::vec3(1, 0, 0));// Rotation
     m_model = glm::rotate(m_model, glm::radians(m_pitch), glm::vec3(0, 1, 0));// Rotation
     m_model = glm::rotate(m_model, glm::radians(m_roll), glm::vec3(0, 0, 1));// Rotation
-    m_model = glm::scale(m_model, m_size);                                            // Scale
+    m_model = glm::scale(m_model, m_size);     
+    ResourceManager::GetShader(m_shader).SetMatrix4("model", m_model);// Scale
 
     if (m_name != "light")
     {
@@ -54,23 +56,21 @@ void Object::Draw() {
     }
 
     if (m_bUseTexture) {
+        ResourceManager::GetShader(m_shader).SetVector3f("scaleFactor", m_size);
         glActiveTexture(GL_TEXTURE0);
         ResourceManager::GetTexture(m_texture).Bind();
     }
 
-    ResourceManager::GetShader(m_shader).SetVector3f("scaleFactor", m_size);
     ResourceManager::GetShader(m_shader).SetFloat("material.shininess", m_shininess);
     ResourceManager::GetShader(m_shader).SetVector3f("color", m_color);
     ResourceManager::GetShader(m_shader).SetInteger("lightMethod", lightMethod);
-    ResourceManager::GetShader(m_shader).SetMatrix4("model", m_model);
+
     ResourceManager::GetShader(m_shader).SetBoolean("bUseTexture", m_bUseTexture);
     ResourceManager::GetShader(m_shader).Use();
-
-    if (this->m_shown) {
-        glBindVertexArray(m_VAO);
-        glDrawArrays(GL_TRIANGLES, 0, m_count);
-        glBindVertexArray(0);
-    }
+    
+    glBindVertexArray(m_VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
 
     if (this->m_clicked && this->m_bShowBox) { // bShowBBox
         this->Show2DBBox();
@@ -233,8 +233,6 @@ void Object::BindVAO() {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-
-    m_count = sizeof(vertices) / (8 * sizeof(GLfloat));
 
     glDeleteBuffers(1, &cubeVBO);
 }
