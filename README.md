@@ -14,32 +14,42 @@
 
 | Position | Size | Rotate |
 |----------|------|--------|
-| ![](./img/gui_control_position.gif) | ![](./img/gui_control_rotation.gif)  | ![](./img/gui_control_size.gif) |
+| ![](img/GUI_Control_Position.gif) | ![](img/GUI_Control_Rotation.gif)  | ![](img/GUI_Control__Size.gif) |
 
 
 - [x] 缩放不影响贴图
 
-![](./img/texture_mapping_consistent_scaling.gif)
+![](img/TextureMapping_ConsistentScaling.gif)
 
 
 - [x] Phong、Blinn-Phong 光照模型
 
 | Phong | Blinn-Phong |
 |----------|------|
-| ![](./img/phong.png) | ![](./img/blinn-phong.png)  |
+| ![](img/Phong.png) | ![](img/Blinn-Phong.png)  |
 
 
 反光度为 0.5 时，Phong 和 Blinn-Phong 着色效果对比：
 
 | Phong (shininess = 0.5) | Blinn-Phong (shininess = 0.5) |
 |----------|------|
-| ![](./img/phong_shininess_0.5.png) | ![](./img/blinn-phong_shininess_0.5.png)  |
+| ![](img/Phong_Shininess_0.5.png) | ![](img/Blinn-Phong_Shininess_0.5.png)  |
+
+
+- [x] [阴影](./doc/Shadow.md)
+
+| Parallel Light | Point Light |
+|----------|------|
+| ![](img/DepthMapping_ParallelLightShadow.gif) | ![](./img/depth_mapping_pointLightShadow.gif)  |
+
+
+
+
+
 
 
 TODO:
 - [ ] 平行光、点光源、聚光
-- [ ] 实现阴影
-- [ ] 点光源阴影
 - [ ] 实现 MSAA（不使用 OpenGL）
 - [ ] 实现 PBR + IBL
 
