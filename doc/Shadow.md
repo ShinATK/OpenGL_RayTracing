@@ -59,9 +59,9 @@
 
 具体方法是：由于 B 点深度值小于 C 点深度值，那就想办法让 B 点深度值变大，或者 C 点深度值变小。
 
-即： $z_C - bias$ 或 $z_B + bias$
+即 $z_C - bias$ 或 $z_B + bias$
 
-从而使得，$z_C - bias < z_B$ ，使得 C 点被判定为照亮
+从而使得 $z_C - bias < z_B$ 使得 C 点被判定为照亮
 
 ![](../img/ShadowAcne_ShadowBias.gif)
 
