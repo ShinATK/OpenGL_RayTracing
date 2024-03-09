@@ -40,20 +40,18 @@
 
 | Parallel Light | Point Light |
 |----------|------|
-| ![](img/DepthMapping_ParallelLightShadow.gif) | ![](./img/depth_mapping_pointLightShadow.gif)  |
+| ![](img/DepthMapping_ParallelLightShadow.gif) | ![](./img/DepthMapping_PointLightShadow.gif)  |
 
 
+- [x] SSAO
 
+| SSAO On | SSAO Off |
+|----------|------|
+| ![](img/SSAO_On.png) | ![](./img/SSAO_Off.png)  |
 
+- [x] 实现 PBR + IBL
 
-
-
-TODO:
-- [ ] 平行光、点光源、聚光
-- [ ] 实现 MSAA（不使用 OpenGL）
-- [ ] 实现 PBR + IBL
-
-- 暂缓
-  - [ ] 绘制坐标轴（世界、直立、局部）
-  - [ ] 增加依据直立坐标轴的移动，旋转控制
+| PBR | IBL |
+|----------|------|
+| ![](img/PBR.png) | ![](./img/IBL.gif)  |
 
