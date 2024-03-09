@@ -3,8 +3,8 @@
 Scene::Scene(GLFWwindow* window, const GLuint width, const GLuint height) :m_width(width), m_height(height), m_window(window), m_camera(nullptr), m_chosenObject(nullptr), Objects(), m_showSkybox(true)
 {
 	// Shadow map
-	m_shadowMap = new Renderer(1024, 1024);
-	m_shadowMap->InitShadowMap();
+	m_DepthMap = new Renderer(1024, 1024);
+	m_DepthMap->InitDepthMap();
 
 	// Camera
 	m_camera = new Camera();
@@ -46,8 +46,8 @@ void Scene::Init()
 	// 加载 shader
 	ResourceManager::LoadShader("./resources/shaders/bbox.vert", "./resources/shaders/bbox.frag", "bbox");
 	ResourceManager::LoadShader("./resources/shaders/basicLight.vert", "./resources/shaders/basicLight.frag", "basicLight");
-	ResourceManager::LoadShader("./resources/shaders/simpleShadow.vert", "./resources/shaders/simpleShadow.frag", "simpleShadow");
-	ResourceManager::LoadShader("./resources/shaders/simpleShadowDebug.vert", "./resources/shaders/simpleShadowDebug.frag", "simpleShadowDebug");
+	ResourceManager::LoadShader("./resources/shaders/shadowMapping.vert", "./resources/shaders/shadowMapping.frag", "shadowMapping");
+	ResourceManager::LoadShader("./resources/shaders/shadowDebug.vert", "./resources/shaders/shadowDebug.frag", "shadowDebug");
 
 	// 加载 texture
 	ResourceManager::LoadTexture("./resources/textures/container.jpg", GL_FALSE, "container");
@@ -89,53 +89,28 @@ void Scene::Update()
 	ResourceManager::GetShader("basicLight").SetVector3f("light.diffuse", Lights["light01"]->GetDiffuse());
 	ResourceManager::GetShader("basicLight").SetVector3f("light.specular", Lights["light01"]->GetSpecular());
 
-	// 点光源阴影
-	// shadow mapping
-	glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
-	glm::mat4 lightView = glm::lookAt(Lights["light01"]->GetPosition(), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-	m_shadowMap->UpdateShadowMap();
-
-	static bool cull_face = false;
-	ImGui::Begin("Cull Face");
-	{
-		ImGui::Checkbox("On/Off", &cull_face);
-	}
-	ImGui::End();
-
-	if(cull_face) glCullFace(GL_FRONT); // 解决阴影悬浮问题
-	{
-		Shader& shadow_shader = ResourceManager::GetShader("simpleShadow");
-		shadow_shader.SetMatrix4("lightSpaceMatrix", lightSpaceMatrix);
-		for (auto& item : Objects)
-		{
-			if (item.second->GetShown())
-				item.second->Draw("simpleShadow");
-		}
-	}
-	if (cull_face) glCullFace(GL_BACK); // 恢复原本cull
-	m_shadowMap->EndShadowMap(m_width, m_height);
-
-	//Debug DepthMap
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, m_shadowMap->GetDepthMap());
-	//ResourceManager::GetShader("simpleShadowDebug").SetInteger("depthMap", 0);
-	//ResourceManager::GetShader("simpleShadowDebug").Use();
-	//m_shadowMap->DebugShadowMap();
-	
-	//static float shadowBias = 0.005;
-	//ImGui::Begin("shadow bias");
+	// Shadow Mapping
+	//static bool cull_face = false;
+	//static float shadowBias = 0;
+	//ImGui::Begin("Shadow Setting");
 	//{
 	//	ImGui::SliderFloat("Bias", &shadowBias, 0, 0.1);
 	//}
 	//ImGui::End();
-	//ResourceManager::GetShader("basicLight").SetFloat("shadowBias", shadowBias);
+	m_DepthMap->UpdateDepthMap(ResourceManager::GetShader("basicLight"));
+	for (auto& item : Objects)
+	{
+		if (item.second->GetShown())
+			item.second->Draw("shadowMapping");
+	}
+	m_DepthMap->EndDepthMap(m_width, m_height);
+	//m_DepthMap->DebugDepthMap();
 
-	ResourceManager::GetShader("basicLight").SetMatrix4("lightSpaceMatrix", lightSpaceMatrix);
-	ResourceManager::GetShader("basicLight").SetInteger("shadowMap", 1);
+	ResourceManager::GetShader("basicLight").SetFloat("shadowBias", 0);
+	ResourceManager::GetShader("basicLight").SetInteger("depthMap", 1);
 	ResourceManager::GetShader("basicLight").Use();
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_shadowMap->GetDepthMap());
+	glBindTexture(GL_TEXTURE_2D, m_DepthMap->GetDepthMap());
 }
 
 void Scene::Render()
