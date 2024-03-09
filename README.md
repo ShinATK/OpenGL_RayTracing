@@ -38,20 +38,8 @@
 
 - [x] [阴影](./doc/Shadow.md)
 
-| Parallel Light | Point Light |
-|----------|------|
-| ![](img/DepthMapping_ParallelLightShadow.gif) | ![](./img/DepthMapping_PointLightShadow.gif)  |
+
+![](img/DepthMapping_ParallelLightShadow.gif)
 
 
-- [x] SSAO
-
-| SSAO On | SSAO Off |
-|----------|------|
-| ![](img/SSAO_On.png) | ![](./img/SSAO_Off.png)  |
-
-- [x] 实现 PBR + IBL
-
-| PBR | IBL |
-|----------|------|
-| ![](img/PBR.png) | ![](./img/IBL.gif)  |
 
