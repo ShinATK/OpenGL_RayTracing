@@ -24,7 +24,7 @@ public:
     Shader& Use();
     Shader& StopUsing();
     // Compiles the shader from given source code
-    void    Compile(const GLchar* vertexSource, const GLchar* fragmentSource); // Note: geometry source code is optional 
+    void    Compile(const GLchar* vertexSource, const GLchar* fragmentSource, const GLchar* geometrySource = nullptr); // Note: geometry source code is optional 
     // Utility functions
     void    SetBoolean(const GLchar* name, GLboolean value);
     void    SetFloat(const GLchar* name, GLfloat value);

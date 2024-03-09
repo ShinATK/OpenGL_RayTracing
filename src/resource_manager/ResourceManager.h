@@ -28,7 +28,7 @@ public:
 
     // Load shader/texture
     static Material     LoadMaterial(const GLchar* name, const GLchar* category, const GLchar* file);
-    static Shader       LoadShader(const GLchar* vShaderFile, const GLchar* fShaderFile, std::string name);
+    static Shader       LoadShader(const GLchar* vShaderFile, const GLchar* fShaderFile, std::string name, const GLchar* gShaderFile=nullptr);
     static Texture2D    LoadTexture(const GLchar* file, GLboolean alpha, std::string name);
     static Texture2D    LoadCubeMap(std::vector< std::string>& faces, GLboolean alpha, std::string name);
 
@@ -47,7 +47,7 @@ private:
     // Private constructor
     ResourceManager() {};
     // Loads and generates a shader from file
-    static Shader       loadShaderFromFile(const GLchar* vShaderFile, const GLchar* fShaderFile);
+    static Shader       loadShaderFromFile(const GLchar* vShaderFile, const GLchar* fShaderFile, const GLchar* gShaderFile = nullptr);
     // Loads a single texture from file
     static Texture2D    loadTextureFromFile(const GLchar* file, GLboolean alpha);
     static Texture2D    loadCubeMapFromFile(std::vector< std::string>& faces, GLboolean alpha);

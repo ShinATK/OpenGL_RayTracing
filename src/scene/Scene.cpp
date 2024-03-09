@@ -46,6 +46,7 @@ void Scene::Init()
 	// ╪сть shader
 	ResourceManager::LoadShader("./resources/shaders/bbox.vert", "./resources/shaders/bbox.frag", "bbox");
 	ResourceManager::LoadShader("./resources/shaders/basicLight.vert", "./resources/shaders/basicLight.frag", "basicLight");
+	ResourceManager::LoadShader("./resources/shaders/shadowCubemap.vert", "./resources/shaders/shadowCubemap.frag", "shadowCubemap", "./resources/shaders/shadowCubemap.geom");
 	ResourceManager::LoadShader("./resources/shaders/shadowMapping.vert", "./resources/shaders/shadowMapping.frag", "shadowMapping");
 	ResourceManager::LoadShader("./resources/shaders/shadowDebug.vert", "./resources/shaders/shadowDebug.frag", "shadowDebug");
 
