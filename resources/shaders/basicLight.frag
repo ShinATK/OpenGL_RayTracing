@@ -34,10 +34,9 @@ uniform int lightMethod;
 
 // Shadow Mapping
 in vec4 FragPosLightSpace;
-float ShadowCalculation(vec4 FragPosLightSpace);
-
+float ShadowMapping(vec4 FragPosLightSpace);
 uniform float shadowBias;
-uniform sampler2D shadowMap;
+uniform sampler2D depthMap;
 
 void main()
 {
@@ -72,27 +71,27 @@ void main()
 	diffuse  *= (bUseTexture)? diffuseColor : material.diffuse;
 
 	// 阴影计算
-	float shadow = ShadowCalculation(FragPosLightSpace);
+	float shadow = ShadowMapping(FragPosLightSpace);
 
 	// 计算最终颜色
 	vec3 finalColor = ambient + (1-shadow) * (diffuse + specular);
 	FragColor = vec4(finalColor, 1.0);
 }
 
-float ShadowCalculation(vec4 FragPosLightSpace)
+float ShadowMapping(vec4 FragPosLightSpace)
 {
 	vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
 	projCoords = projCoords * 0.5 + 0.5;
-	float closestDepth = texture(shadowMap, projCoords.xy).r;
+	float closestDepth = texture(depthMap, projCoords.xy).r;
 	float currentDepth = projCoords.z;
 
 	float shadow = 0.0;
-	vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+	vec2 texelSize = 1.0 / textureSize(depthMap, 0);
 	for(int x = -1; x<=1; ++x)
 	{
 		for(int y = -1; y<=1; ++y)
 		{
-			float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x,y)*texelSize).r;
+			float pcfDepth = texture(depthMap, projCoords.xy + vec2(x,y)*texelSize).r;
 			shadow += currentDepth-shadowBias > pcfDepth? 1.0 : 0.0;
 		}
 	}
@@ -102,4 +101,5 @@ float ShadowCalculation(vec4 FragPosLightSpace)
 		return 0.0; // 视锥外不计算阴影
 	return shadow;
 }
+
 
