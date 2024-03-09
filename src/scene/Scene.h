@@ -21,7 +21,7 @@ private:
 	GLuint				m_height;
 
 	Camera*				m_camera;
-	Renderer*			m_shadowMap;
+	Renderer* m_DepthMap;
 	glm::mat4			m_projection;
 
 	Object*				m_chosenObject; // chosen object
