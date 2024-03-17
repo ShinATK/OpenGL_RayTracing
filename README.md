@@ -45,3 +45,8 @@
 - [x] IBL
 
 ![](img/IBL.gif)
+
+
+- [x] BVH
+
+![](img/bvh_bounding_box.gif)
