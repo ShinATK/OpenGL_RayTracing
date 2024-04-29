@@ -63,7 +63,6 @@ int main()
 /* Window Setting */
         HideCursor(window->GetWindow(), bCatchMouse);
         glClearColor(gui->clearColor.x * gui->clearColor.w, gui->clearColor.y * gui->clearColor.w, gui->clearColor.z * gui->clearColor.w, gui->clearColor.w);
-        
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // TODO:封装到 GLWindow中，用引用返回

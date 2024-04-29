@@ -46,7 +46,6 @@ void Scene::Init()
 	// ╪сть shader
 	ResourceManager::LoadShader("./resources/shaders/bbox.vert", "./resources/shaders/bbox.frag", "bbox");
 	ResourceManager::LoadShader("./resources/shaders/basicLight.vert", "./resources/shaders/basicLight.frag", "basicLight");
-	ResourceManager::LoadShader("./resources/shaders/shadowCubemap.vert", "./resources/shaders/shadowCubemap.frag", "shadowCubemap", "./resources/shaders/shadowCubemap.geom");
 	ResourceManager::LoadShader("./resources/shaders/shadowMapping.vert", "./resources/shaders/shadowMapping.frag", "shadowMapping");
 	ResourceManager::LoadShader("./resources/shaders/shadowDebug.vert", "./resources/shaders/shadowDebug.frag", "shadowDebug");
 
@@ -91,13 +90,13 @@ void Scene::Update()
 	ResourceManager::GetShader("basicLight").SetVector3f("light.specular", Lights["light01"]->GetSpecular());
 
 	// Shadow Mapping
-	//static bool cull_face = false;
-	//static float shadowBias = 0;
-	//ImGui::Begin("Shadow Setting");
-	//{
-	//	ImGui::SliderFloat("Bias", &shadowBias, 0, 0.1);
-	//}
-	//ImGui::End();
+	static bool cull_face = false;
+	static float shadowBias = 0;
+	ImGui::Begin("Shadow Setting");
+	{
+		ImGui::SliderFloat("Bias", &shadowBias, 0, 0.1);
+	}
+	ImGui::End();
 	m_DepthMap->UpdateDepthMap(ResourceManager::GetShader("basicLight"));
 	for (auto& item : Objects)
 	{

@@ -56,5 +56,3 @@ GLFWwindow* GLWindow::GetWindow() const
 {
     return this->m_window;
 }
-
-

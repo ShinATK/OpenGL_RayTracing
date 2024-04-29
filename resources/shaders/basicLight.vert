@@ -9,6 +9,7 @@ uniform mat4 view;
 uniform mat4 model;
 
 uniform vec3 scaleFactor;
+
 uniform mat4 lightSpaceMatrix;
 
 out vec3 FragPos;
